@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "mugewrayce-mod:item/origin_token"
+  }
+}

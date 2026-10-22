@@ -1,0 +1,129 @@
+# MuGewRayce Mod（沐玖芸萱）
+
+基于 Fabric 的 Minecraft 26.1 模组。当前公开基线为 **1.2.7**，包含体型调节、净化系物品、施法实体、特殊角色与若干 GUI；2.0.0「魔法体系」正在开发中。
+
+## 功能
+
+### 体型调节
+
+通过命令调整玩家身高（10~1000 cm，默认 185 cm），并按比例联动：
+
+- 缩放比例（SCALE）
+- 移动速度、跳跃强度
+- 最大生命值、攻击伤害、攻击击退
+- 方块/实体交互距离、安全摔落距离、最大行走高度
+
+另有“特殊尺寸组”：缩小体型、降低生命值、提高交互距离。
+
+### 净化系物品
+
+| 物品 | 说明 |
+|---|---|
+| 净化水晶（Purification Crystal） | 长按右键举起，持续获得力量、生命恢复、抗性提升、抗火、伤害吸收、饱和；脚下生成净化法阵，松开后效果保留 60 秒 |
+| 净化法杖（Purification Staff） | 按切换 GUI 选择的模式施法：魔法球 / 单体治愈 / 群体治愈 / 群体伤害 / 防御 |
+| 净化圣剑（Purification Holy Sword） | 面板伤害 2000，攻速 2.0，带横扫 |
+| 净化长枪（Purification Long Spear） | 面板伤害 2000，攻速 1.8，带横扫 |
+| 净化圣弓（Purification Holy Bow） | 套用原版弓，无需背包有箭即可发射 |
+| 归零（Zero Reset） | 右键发射归零魔法球，每 2 tick 连发，命中实体 2000 伤害，命中方块破块 |
+| 净化光环（Purification Halo） | 头盔位护甲，+20 护甲 / +20 韧性 / +80% 击退抗性，自带高等级附魔，穿戴外显 |
+
+净化系物品均火焰免疫、不可破坏；手持其中任意一件时按 `I` 可打开净化物品切换 GUI。
+
+### 施法与实体
+
+- **净化魔法球**：直线飞行投射物，法杖与归零两种变体；速度 4.5 格/tick，飞行 1024 格后消失，受 `mobGriefing` 约束。
+- **净化法阵**：净化水晶长按时出现在玩家脚下的 2×2 地面法阵。
+- **净化魔法阵**：法杖施法的单体治愈 / 群体治愈 / 群体伤害 / 防御四种阵法；除防御阵需保持长按外，其余阵松开后保留 30 秒并持续作用。
+
+### 特殊角色
+
+| 角色 | 说明 |
+|---|---|
+| 默认（Default） | 无变化 |
+| 魔法体（Magic Body） | 物理免疫；远程投射物直接穿过；仅魔法伤害与火焰/冰冻/溺水/凋零等豁免伤害可生效；`/kill` 与虚空可杀 |
+| 特殊-icefair | 属于魔法体；受攻击时在来源方向召唤自动防御魔法阵，满 4 枚成环全向防御；套用 icefair 特殊尺寸组 |
+
+角色持久化到世界存档根目录的 `mugewrayce_roles.json`，退出重进仍保留。
+
+### GUI 与容器
+
+- **柃之册**：功能选择 → 角色切换 / 玩家尺寸属性（支持中文、English）
+- **生命转换令牌**：右键直接打开角色切换 GUI
+- **百杉包**：右键打开 54 格大箱子式背包，内容随物品保存
+- **净化物品切换**：手持净化系物品按 `I` 打开
+
+## 命令
+
+所有命令以 `/mugewrayce` 开头，目标玩家参数可选（默认自己）。
+
+### 体型
+
+| 子命令 | 说明 |
+|---|---|
+| `/mugewrayce size adjust <10~1000>` | 调整身高（cm） |
+| `/mugewrayce size reset` | 恢复默认尺寸 |
+| `/mugewrayce size special` | 应用特殊尺寸组 |
+| `/mugewrayce size status` | 查看当前全部属性 |
+
+### 特殊角色
+
+| 子命令 | 说明 |
+|---|---|
+| `/mugewrayce entity default [目标]` | 切换为默认角色 |
+| `/mugewrayce entity magic [目标]` | 切换为魔法体 |
+| `/mugewrayce entity special icefair [目标]` | 切换为特殊角色 icefair |
+
+示例：
+
+```
+/mugewrayce size adjust 150
+/mugewrayce size reset
+/mugewrayce entity magic
+/mugewrayce entity special icefair <目标玩家>
+```
+
+## 构建
+
+需要 **JDK 25**。
+
+```bash
+./gradlew build
+```
+
+构建产物位于 `build/libs/`。
+
+当前依赖：
+
+- Minecraft `26.1`
+- Fabric Loader `0.19.2`
+- Fabric API `0.145.1+26.1`
+- Fabric Loom `1.16-SNAPSHOT`
+- Java 25
+
+## 项目结构
+
+```
+src/main/java/com/mugewrayce/sizeadjuster/
+  client/      客户端入口、GUI、实体渲染器
+  command/     /mugewrayce 命令
+  container/   百杉包菜单与容器
+  entity/      魔法球、法阵、施法魔法阵
+  item/        物品注册与行为
+  mixin/       投射物穿行等 Mixin
+  payload/     自定义网络包
+  switchitem/  净化物品切换
+  util/        体型属性、角色、角色持久化
+src/main/resources/
+  assets/mugewrayce-mod/   贴图、模型、语言文件
+  data/minecraft/          物品标签
+```
+
+## 版本说明
+
+- 当前公开基线：**1.2.7**；
+- 2.0.0「魔法体系」正在开发，净化系将改名为 **Equipoise**，并新增魔法类型、魔力值、学习证、考试与试炼等内容；
+- 2.0.0 完成前，1.2.7 的物品 ID 与行为仍以本仓库为准。
+
+## License
+
+本项目基于 **CC0-1.0** 许可发布，详见 [LICENSE](LICENSE)。

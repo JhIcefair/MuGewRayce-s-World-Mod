@@ -1,0 +1,33 @@
+{
+	"schemaVersion": 1,
+	"id": "mugewrayce-mod",
+	"version": "${version}",
+	"name": "MuGewRayce Mod",
+	"description": "沐玖芸萱模组：体型调节、净化武器/法杖/魔法阵、柃之册、特殊角色（魔法体/icefair）等。",
+	"authors": [
+		"MuGewRayce"
+	],
+	"license": "CC0-1.0",
+	"icon": "assets/mugewrayce-mod/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"com.mugewrayce.sizeadjuster.SizeAdjusterMod"
+		],
+		"client": [
+			"com.mugewrayce.sizeadjuster.client.MuGewRayceModClient"
+		]
+	},
+	"mixins": [
+		{
+			"config": "mugewrayce-mod.mixins.json",
+			"environment": "*"
+		}
+	],
+	"depends": {
+		"fabricloader": ">=0.19.2",
+		"minecraft": "~26.1",
+		"java": ">=25",
+		"fabric-api": "*"
+	}
+}

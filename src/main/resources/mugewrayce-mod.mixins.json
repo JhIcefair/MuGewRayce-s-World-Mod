@@ -1,0 +1,11 @@
+{
+  "required": true,
+  "package": "com.mugewrayce.sizeadjuster.mixin",
+  "compatibilityLevel": "JAVA_25",
+  "mixins": [
+    "MagicBodyPlayerProjectileMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

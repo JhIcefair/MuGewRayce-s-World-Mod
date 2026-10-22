@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/handheld",
+  "textures": {
+    "layer0": "mugewrayce-mod:item/purification_crystal"
+  }
+}

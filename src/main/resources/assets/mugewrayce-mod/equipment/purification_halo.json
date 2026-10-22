@@ -1,0 +1,14 @@
+{
+  "layers": {
+    "humanoid": [
+      {
+        "texture": "mugewrayce-mod:purification_halo"
+      }
+    ],
+    "humanoid_baby": [
+      {
+        "texture": "mugewrayce-mod:purification_halo"
+      }
+    ]
+  }
+}
