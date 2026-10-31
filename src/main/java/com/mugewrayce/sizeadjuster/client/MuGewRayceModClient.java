@@ -1,6 +1,8 @@
 package com.mugewrayce.sizeadjuster.client;
 
 import com.mugewrayce.sizeadjuster.SizeAdjusterMod;
+import com.mugewrayce.sizeadjuster.clientbridge.ScreenOpener;
+import com.mugewrayce.sizeadjuster.clientbridge.ScreenOpenerHolder;
 import com.mugewrayce.sizeadjuster.container.BaishanBagMenu;
 import com.mugewrayce.sizeadjuster.entity.ModEntities;
 import com.mugewrayce.sizeadjuster.payload.RoleStatusPayload;
@@ -30,6 +32,19 @@ public class MuGewRayceModClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
+        // 公共物品类 → 客户端 GUI 的桥接实现（W01 4.2；服务端/未初始化时为空实现）
+        ScreenOpenerHolder.set(new ScreenOpener() {
+            @Override
+            public void openBookOfLing() {
+                Minecraft.getInstance().setScreen(new BookOfLingScreen());
+            }
+
+            @Override
+            public void openRoleSwitch() {
+                Minecraft.getInstance().setScreen(new RoleSwitchScreen());
+            }
+        });
+
         switchKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
                 "key.mugewrayce.switch",
                 GLFW.GLFW_KEY_I,
