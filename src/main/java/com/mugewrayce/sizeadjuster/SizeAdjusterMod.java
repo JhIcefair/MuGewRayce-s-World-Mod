@@ -2,15 +2,13 @@ package com.mugewrayce.sizeadjuster;
 
 import com.mugewrayce.sizeadjuster.command.SizeCommand;
 import com.mugewrayce.sizeadjuster.entity.IcefairShields;
-import com.mugewrayce.sizeadjuster.entity.ModEntities;
 import com.mugewrayce.sizeadjuster.entity.PurificationFormationEntity;
-import com.mugewrayce.sizeadjuster.item.ModCreativeTabs;
-import com.mugewrayce.sizeadjuster.item.ModItems;
 import com.mugewrayce.sizeadjuster.payload.RoleActionPayload;
 import com.mugewrayce.sizeadjuster.payload.RoleStatusPayload;
 import com.mugewrayce.sizeadjuster.payload.SizeActionPayload;
 import com.mugewrayce.sizeadjuster.payload.SizeStatusPayload;
 import com.mugewrayce.sizeadjuster.payload.StaffModePayload;
+import com.mugewrayce.sizeadjuster.registry.ModRegistry;
 import com.mugewrayce.sizeadjuster.switchitem.SwitchItemPayload;
 import com.mugewrayce.sizeadjuster.util.PlayerRoles;
 import com.mugewrayce.sizeadjuster.util.PlayerStateCleanup;
@@ -33,9 +31,7 @@ public class SizeAdjusterMod implements ModInitializer {
     public void onInitialize() {
         LOGGER.info("mugewrayce mod initializing for Minecraft 26.1...");
 
-        ModItems.register();
-        ModEntities.register();
-        ModCreativeTabs.register();
+        ModRegistry.register();
         SwitchItemPayload.register();
         SizeActionPayload.register();
         SizeStatusPayload.register();
