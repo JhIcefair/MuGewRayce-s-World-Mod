@@ -31,7 +31,7 @@ import java.util.UUID;
  * 阵法模式（长按召唤）：
  * - 单体治愈：对自己使用，跟随自己脚下；
  * - 群体治愈 / 群体伤害：固定于施法落点（半径 3 格、上方 5 格）；
- * - 防御：保持长按才存在，竖立于玩家前方约 1 格并跟随视角。
+ * - 防御：保持长按才存在，竖立于玩家前方约 0.5 格并跟随视角。
  * 除防御阵外，其余阵松开后保留 30 秒并持续作用。
  */
 public class StaffItem extends LiftableItem {
@@ -189,6 +189,18 @@ public class StaffItem extends LiftableItem {
         } else {
             // 其他阵：松开后保留 30 秒并持续作用
             formation.startPersist();
+        }
+    }
+
+    /** 玩家离开时清理其充能魔法球与阵法（W01 4.4，避免静态表残留到下一次会话）。 */
+    public static void clearPlayer(UUID owner) {
+        PurificationOrbEntity orb = CHARGING_ORBS.remove(owner);
+        if (orb != null && orb.isAlive()) {
+            orb.discard();
+        }
+        PurificationFormationEntity formation = FORMATIONS.remove(owner);
+        if (formation != null && formation.isAlive()) {
+            formation.discard();
         }
     }
 

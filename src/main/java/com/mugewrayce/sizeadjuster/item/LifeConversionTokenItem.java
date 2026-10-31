@@ -12,7 +12,7 @@ import net.minecraft.world.level.Level;
 /**
  * 生命转换令牌：右键直接打开"角色切换"GUI（与柃之册第二级 GUI 相同，
  * 此处作为第一级 GUI 打开）。
- * 模型/手持样式同起源令牌（平面贴图）；贴图暂用 ls\2.png。
+ * 模型/手持样式同起源令牌（平面贴图）；贴图 ls\17.png。
  * GUI 打开仅发生在客户端（服务端无事可做，返回 SUCCESS 即可）。
  */
 public class LifeConversionTokenItem extends Item {

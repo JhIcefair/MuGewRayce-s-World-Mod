@@ -33,6 +33,11 @@ public class RoleSwitchScreen extends Screen {
         clientRoleCode = role;
     }
 
+    /** 断开连接时重置客户端静态状态（W01 4.4，避免跨世界残留）。 */
+    public static void resetClientState() {
+        clientRoleCode = PlayerRoles.ROLE_DEFAULT;
+    }
+
     public RoleSwitchScreen() {
         super(Minecraft.getInstance(), Minecraft.getInstance().font, Component.literal("role_switch"));
     }

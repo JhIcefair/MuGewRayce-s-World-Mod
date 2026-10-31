@@ -53,19 +53,19 @@ public final class ModItems {
     /** 净化圣弓（Purification Holy Bow）：套用原版弓功能。 */
     public static Item purificationHolyBow;
 
-    /** 柃之册（Book of Ling）：模型贴图直接套用原版书，暂无功能。 */
+    /** 柃之册（Book of Ling）：自家书贴图；右键打开功能选择 GUI。 */
     public static Item bookOfLing;
 
-    /** 归零（Zero Reset）：模型套用钻石剑、贴图套用竹子；右键直接发射箭矢。 */
+    /** 归零（Zero Reset）：自家贴图/模型，手持姿态见模型 display；右键直接发射箭矢。 */
     public static Item zeroReset;
 
     /** 百杉包（Baishan Bag）：右键打开 54 格大箱子式背包；手持模型套用木棍。 */
     public static Item baishanBag;
 
-    /** 净化光环（Purification Halo）：头盔位护甲，不外显；20护甲/20韧性/80%击退抗性；自带附魔。 */
+    /** 净化光环（Purification Halo）：头盔位护甲，穿戴后外显；20护甲/20韧性/80%击退抗性；自带附魔。 */
     public static Item purificationHalo;
 
-    /** 生命转换令牌（Life Conversion Token）：右键打开角色切换 GUI；贴图暂用 ls\2.png。 */
+    /** 生命转换令牌（Life Conversion Token）：右键打开角色切换 GUI；贴图 ls\17.png。 */
     public static Item lifeConversionToken;
 
     private ModItems() {
@@ -110,7 +110,7 @@ public final class ModItems {
         baishanBag = registerItem("baishan_bag",
                 new Item.Properties().stacksTo(1), BaishanBagItem::new);
 
-        // 净化光环：头盔位护甲（EQUIPPABLE 组件，右键自动穿戴，无 assetId → 穿戴不外显）；
+        // 净化光环：头盔位护甲（EQUIPPABLE 组件，右键自动穿戴，assetId → equipment/purification_halo.json → 穿戴外显）；
         // 20 护甲 / 20 韧性 / 80% 击退抗性；自带附魔（延迟组件，随注册表就绪后解析）；
         // 火焰免疫 + 不可破坏（base）
         purificationHalo = registerItem("purification_halo",
@@ -121,7 +121,7 @@ public final class ModItems {
                                 lookup -> haloEnchantments(lookup))));
 
         // 生命转换令牌：右键打开角色切换 GUI（默认/魔法体/特殊-icefair）；
-        // 火焰免疫 + 不可破坏（同净化系列）；模型/手持样式同起源令牌；贴图暂用 ls\2.png
+        // 火焰免疫 + 不可破坏（同净化系列）；模型/手持样式同起源令牌；贴图 ls\17.png
         lifeConversionToken = registerItem("life_conversion_token",
                 base(new Item.Properties()), LifeConversionTokenItem::new);
     }

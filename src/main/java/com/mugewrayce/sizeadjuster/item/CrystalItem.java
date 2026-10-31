@@ -59,4 +59,12 @@ public class CrystalItem extends LiftableItem {
         }
         return false;
     }
+
+    /** 玩家离开时清理其净化法阵（W01 4.4，避免静态表残留到下一次会话）。 */
+    public static void clearPlayer(UUID owner) {
+        PurificationCircleEntity circle = CIRCLES.remove(owner);
+        if (circle != null && circle.isAlive()) {
+            circle.discard();
+        }
+    }
 }

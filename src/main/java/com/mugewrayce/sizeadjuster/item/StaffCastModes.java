@@ -33,4 +33,9 @@ public final class StaffCastModes {
             MODES.put(player.getUUID(), mode);
         }
     }
+
+    /** 玩家离开时移除其施法模式记录（W01 4.4）。 */
+    public static void clear(UUID uuid) {
+        MODES.remove(uuid);
+    }
 }

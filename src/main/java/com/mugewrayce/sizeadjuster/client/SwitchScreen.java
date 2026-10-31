@@ -42,6 +42,11 @@ public class SwitchScreen extends Screen {
     /** 客户端当前施法模式（高亮用，点击后本地记录并发送服务端）。 */
     public static int clientCastMode = StaffCastModes.MODE_ORB;
 
+    /** 断开连接时重置客户端静态状态（W01 4.4，避免跨世界残留）。 */
+    public static void resetClientState() {
+        clientCastMode = StaffCastModes.MODE_ORB;
+    }
+
     public SwitchScreen() {
         super(Minecraft.getInstance(), Minecraft.getInstance().font, Component.literal("switch"));
     }

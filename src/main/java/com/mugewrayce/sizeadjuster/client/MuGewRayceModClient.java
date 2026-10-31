@@ -10,6 +10,7 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
 import net.minecraft.client.KeyMapping;
@@ -40,6 +41,12 @@ public class MuGewRayceModClient implements ClientModInitializer {
                     client.setScreen(new SwitchScreen());
                 }
             }
+        });
+
+        // 断开连接时重置客户端静态 GUI 状态（W01 4.4，避免跨世界/跨服务器残留）
+        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
+            RoleSwitchScreen.resetClientState();
+            SwitchScreen.resetClientState();
         });
 
         // 净化魔法球 / 净化法阵 / 净化魔法阵（法杖施法）渲染器
