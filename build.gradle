@@ -26,12 +26,15 @@ loom {
 dependencies {
 	// To change the versions see the gradle.properties file
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
-	
+
+	// 26.1 是非混淆版本，官方 fabric-example-mod/26.1 模板使用 implementation；
+	// Loom 1.16 的 net.fabricmc.fabric-loom 不提供 modImplementation
+	// （remap 配置在非混淆环境不可用，modImplementation 属于 net.fabricmc.fabric-loom-remap）。
 	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
 	// Fabric API. This is technically optional, but you probably want it anyway.
 	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
-	
+
 }
 
 processResources {
@@ -82,3 +85,4 @@ publishing {
 		// retrieving dependencies.
 	}
 }
+

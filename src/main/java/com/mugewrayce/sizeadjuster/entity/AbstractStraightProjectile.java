@@ -14,7 +14,7 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * 直线飞行投射物基类（净化魔法球 / 净化箭矢共用）：
+ * 直线飞行投射物基类（净化魔法球等直线投射物共用）：
  * - 无重力、无空气阻力，严格沿初速度方向直线飞行（指哪打哪）；
  * - 每 tick 移动并做命中判定；累计飞行距离超过 maxDistance 后直接消失；
  * - 提供充能悬停状态（charging，长按充能时用）：不移动、不判定命中，位置由外部每 tick 设置；

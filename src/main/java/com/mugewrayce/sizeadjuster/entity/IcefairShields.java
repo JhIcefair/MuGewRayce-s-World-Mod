@@ -60,7 +60,7 @@ public final class IcefairShields {
      * 环境型伤害（火焰/冰冻/溺水/凋零效果/摔落等）不在此列（由伤害拦截层面处理）。
      *
      * 当受到这类攻击时，优先执行自动防御魔法阵逻辑：在伤害来源方向召唤一枚
-     * 小的净化魔法防御阵（直径 1 格，与法杖防御阵同特性），并抵挡该方向伤害。
+     * 小的净化魔法防御阵（直径 0.5 格，与法杖防御阵同特性），并抵挡该方向伤害。
      *
      * @return false=本次伤害被自动防御魔法阵抵挡（不生效）；true=伤害照常生效
      */
@@ -115,7 +115,7 @@ public final class IcefairShields {
         shield.initIcefairShield(yaw);
         shield.setSize(0.5F); // 直径 0.5 格
         shield.setPos(player.getEyePosition().add(
-                yawVector(yaw).scale(SHIELD_DISTANCE)).add(0.0, SHIELD_Y_OFFSET, 0.0)); // 距离玩家 0.25 格、Y 轴下移 0.5 格
+                yawVector(yaw).scale(SHIELD_DISTANCE)).add(0.0, SHIELD_Y_OFFSET, 0.0)); // 距离玩家 0.25 格、Y 轴下移 0.25 格
         shield.setYRot(yaw);
         shield.setXRot(0.0F);
         level.addFreshEntity(shield);

@@ -2,17 +2,16 @@ package com.mugewrayce.sizeadjuster;
 
 import com.mugewrayce.sizeadjuster.command.SizeCommand;
 import com.mugewrayce.sizeadjuster.entity.IcefairShields;
-import com.mugewrayce.sizeadjuster.entity.ModEntities;
 import com.mugewrayce.sizeadjuster.entity.PurificationFormationEntity;
-import com.mugewrayce.sizeadjuster.item.ModCreativeTabs;
-import com.mugewrayce.sizeadjuster.item.ModItems;
 import com.mugewrayce.sizeadjuster.payload.RoleActionPayload;
 import com.mugewrayce.sizeadjuster.payload.RoleStatusPayload;
 import com.mugewrayce.sizeadjuster.payload.SizeActionPayload;
 import com.mugewrayce.sizeadjuster.payload.SizeStatusPayload;
 import com.mugewrayce.sizeadjuster.payload.StaffModePayload;
+import com.mugewrayce.sizeadjuster.registry.ModRegistry;
 import com.mugewrayce.sizeadjuster.switchitem.SwitchItemPayload;
 import com.mugewrayce.sizeadjuster.util.PlayerRoles;
+import com.mugewrayce.sizeadjuster.util.PlayerStateCleanup;
 import com.mugewrayce.sizeadjuster.util.RoleStore;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
@@ -32,9 +31,7 @@ public class SizeAdjusterMod implements ModInitializer {
     public void onInitialize() {
         LOGGER.info("mugewrayce mod initializing for Minecraft 26.1...");
 
-        ModItems.register();
-        ModEntities.register();
-        ModCreativeTabs.register();
+        ModRegistry.register();
         SwitchItemPayload.register();
         SizeActionPayload.register();
         SizeStatusPayload.register();
@@ -97,6 +94,9 @@ public class SizeAdjusterMod implements ModInitializer {
 
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) ->
                 SizeCommand.register(dispatcher));
+
+        // 玩家断开连接：清理按 UUID 记录的瞬态状态（充能球/阵法/法阵/施法模式，W01 4.4）
+        PlayerStateCleanup.register();
 
         // 角色持久化：服务器启动（进入/重进世界）载入，停止时再写入，保证退出重进仍保留
         ServerLifecycleEvents.SERVER_STARTED.register(RoleStore::load);

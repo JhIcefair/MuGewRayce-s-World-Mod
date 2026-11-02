@@ -33,8 +33,8 @@ import java.util.UUID;
  * - GROUP_HEAL（群体治愈）：固定于施法位置；半径 3 格、向上 5 格内实体持续治愈。
  * - GROUP_DAMAGE（群体伤害）：固定于施法位置；每秒对范围内实体 3~10 随机伤害
  *   （不能对施法者自己造成攻击伤害）。
- * - DEFENSE（防御）：竖立于玩家前方约 1 格（跟随视角 360° 旋转、平面与视线垂直），
- *   保持长按才存在，抵挡来自前方的伤害；尺寸默认身高对应直径 2 格（随身高缩放）。
+ * - DEFENSE（防御）：竖立于玩家前方约 0.5 格（跟随视角 360° 旋转、平面与视线垂直），
+ *   保持长按才存在，生效期间抵挡一切伤害（投射物由阵法反弹）；尺寸默认身高对应直径 3 格（随身高缩放）。
  *
  * 除防御阵需保持长按外，其余阵长按召唤、松开后保留 30 秒并持续作用
  * （单体治愈在此期间继续跟随施法者）。
@@ -46,7 +46,7 @@ public class PurificationFormationEntity extends Entity {
     public static final int TYPE_GROUP_DAMAGE = 3;
     public static final int TYPE_DEFENSE = 4;
 
-    /** icefair 自动防御魔法阵（特殊角色 icefair 自带；直径 1 格，见 IcefairShields）。 */
+    /** icefair 自动防御魔法阵（特殊角色 icefair 自带；直径 0.5 格，见 IcefairShields）。 */
     public static final int TYPE_ICEFAIR_SHIELD = 5;
 
     /** 非防御阵松开后的保留时长：30 秒。 */
@@ -77,7 +77,7 @@ public class PurificationFormationEntity extends Entity {
     // ---- icefair 自动防御魔法阵（TYPE_ICEFAIR_SHIELD）服务端字段（不同步） ----
     /** 该阵朝向（世界水平 yaw，度；指向伤害来源方向）。 */
     private int shieldDirYaw;
-    /** 环形槽位（0~5，-1=非环形即独立朝向）。 */
+    /** 环形槽位（0~3，-1=非环形即独立朝向）。 */
     private int shieldRingSlot = -1;
     /** 剩余维持 tick（3 秒，受击重置）。 */
     private int shieldLife;
@@ -124,7 +124,7 @@ public class PurificationFormationEntity extends Entity {
         this.shieldLife = IcefairShields.SHIELD_LIFE_TICKS;
     }
 
-    /** 分配环形槽位（icefair 满 6 枚围绕成环时调用），同时重置倒计时。 */
+    /** 分配环形槽位（icefair 满 4 枚围绕成环时调用），同时重置倒计时。 */
     public void setIcefairRingSlot(int slot) {
         this.shieldRingSlot = slot;
         this.shieldLife = IcefairShields.SHIELD_LIFE_TICKS;
@@ -140,7 +140,7 @@ public class PurificationFormationEntity extends Entity {
         return this.shieldDirYaw;
     }
 
-    /** 是否处于环形状态（icefair 满 6 枚）。 */
+    /** 是否处于环形状态（icefair 满 4 枚）。 */
     public boolean isIcefairRingSlot() {
         return this.shieldRingSlot >= 0;
     }
@@ -254,7 +254,7 @@ public class PurificationFormationEntity extends Entity {
                 ? this.shieldRingSlot * (360 / IcefairShields.MAX_SHIELDS)
                 : this.shieldDirYaw;
         this.setPos(owner.getEyePosition().add(IcefairShields.yawVector(yaw).scale(IcefairShields.SHIELD_DISTANCE))
-                .add(0.0, IcefairShields.SHIELD_Y_OFFSET, 0.0)); // 距离玩家 0.25 格、Y 轴下移 0.5 格
+                .add(0.0, IcefairShields.SHIELD_Y_OFFSET, 0.0)); // 距离玩家 0.25 格、Y 轴下移 0.25 格
         this.setYRot(yaw);
         this.setXRot(0.0F);
         this.setSize(0.5F); // 直径 0.5 格

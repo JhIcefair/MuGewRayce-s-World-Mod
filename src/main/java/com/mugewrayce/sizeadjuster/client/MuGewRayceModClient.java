@@ -1,6 +1,8 @@
 package com.mugewrayce.sizeadjuster.client;
 
 import com.mugewrayce.sizeadjuster.SizeAdjusterMod;
+import com.mugewrayce.sizeadjuster.clientbridge.ScreenOpener;
+import com.mugewrayce.sizeadjuster.clientbridge.ScreenOpenerHolder;
 import com.mugewrayce.sizeadjuster.container.BaishanBagMenu;
 import com.mugewrayce.sizeadjuster.entity.ModEntities;
 import com.mugewrayce.sizeadjuster.payload.RoleStatusPayload;
@@ -10,6 +12,7 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
 import net.minecraft.client.KeyMapping;
@@ -29,6 +32,19 @@ public class MuGewRayceModClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
+        // 公共物品类 → 客户端 GUI 的桥接实现（W01 4.2；服务端/未初始化时为空实现）
+        ScreenOpenerHolder.set(new ScreenOpener() {
+            @Override
+            public void openBookOfLing() {
+                Minecraft.getInstance().setScreen(new BookOfLingScreen());
+            }
+
+            @Override
+            public void openRoleSwitch() {
+                Minecraft.getInstance().setScreen(new RoleSwitchScreen());
+            }
+        });
+
         switchKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
                 "key.mugewrayce.switch",
                 GLFW.GLFW_KEY_I,
@@ -40,6 +56,12 @@ public class MuGewRayceModClient implements ClientModInitializer {
                     client.setScreen(new SwitchScreen());
                 }
             }
+        });
+
+        // 断开连接时重置客户端静态 GUI 状态（W01 4.4，避免跨世界/跨服务器残留）
+        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
+            RoleSwitchScreen.resetClientState();
+            SwitchScreen.resetClientState();
         });
 
         // 净化魔法球 / 净化法阵 / 净化魔法阵（法杖施法）渲染器
