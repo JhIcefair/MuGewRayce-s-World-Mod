@@ -13,6 +13,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.permissions.Permissions;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
@@ -35,7 +36,8 @@ import static net.minecraft.commands.Commands.literal;
  *       也可只写路径（先按本模组命名空间解析，找不到再按 {@code minecraft}）；</li>
  *   <li>走的是注册表查询，<b>不新增任何物品注册</b>——W07 / W09 的物品注册后会自然可用；</li>
  *   <li>对"无组件即无效"的物品（见 {@link InvalidItemRules}）额外提示当前视为无效物品，
- *       但<b>不阻止</b>发放：草案 §14.9 要求这些物品"拿得到、只是无效"。</li>
+ *       但<b>不阻止</b>发放：草案 §14.9 要求这些物品"拿得到、只是无效"；</li>
+ *   <li>权限：与 {@code /give} 一致，需要"游戏管理员"级指令权限；普通玩家不能用它给自己刷物品。</li>
  * </ul>
  */
 public final class ItemCommand {
@@ -46,6 +48,7 @@ public final class ItemCommand {
     /** 生成 {@code item} 分支，由 {@link SizeCommand} 挂到 {@code /mugewrayce} 根指令下。 */
     public static LiteralArgumentBuilder<CommandSourceStack> branch() {
         return literal("item")
+                .requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
                 .then(literal("give")
                         .then(argument("id", StringArgumentType.string())
                                 .suggests((ctx, builder) -> SharedSuggestionProvider.suggest(
