@@ -25,6 +25,7 @@ import static net.minecraft.commands.Commands.literal;
  *   /mugewrayce entity magic [目标玩家]               —— 魔法体（物理免疫）
  *   /mugewrayce entity special <特殊角色> [目标玩家]   —— 特殊角色
  *     （"特殊"下再增一字段选择采用哪种，目前仅 icefair，将来新增直接追加）。
+ * - item：2.0.0 物品指令获取入口（give <id> [数量] [目标玩家]），见 ItemCommand。
  */
 public class SizeCommand {
 
@@ -92,6 +93,8 @@ public class SizeCommand {
                     )
                 )
             )
+            // 2.0.0 物品指令获取入口（草案 §14.9）：/mugewrayce item give <id> [数量] [目标]
+            .then(ItemCommand.branch())
         );
     }
 
