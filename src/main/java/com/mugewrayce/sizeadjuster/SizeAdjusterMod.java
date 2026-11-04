@@ -1,6 +1,7 @@
 package com.mugewrayce.sizeadjuster;
 
 import com.mugewrayce.sizeadjuster.command.SizeCommand;
+import com.mugewrayce.sizeadjuster.data.CertCounter;
 import com.mugewrayce.sizeadjuster.entity.IcefairShields;
 import com.mugewrayce.sizeadjuster.entity.PurificationFormationEntity;
 import com.mugewrayce.sizeadjuster.network.ModNetwork;
@@ -104,6 +105,9 @@ public class SizeAdjusterMod implements ModInitializer {
         // 角色持久化：服务器启动（进入/重进世界）载入，停止时再写入，保证退出重进仍保留
         ServerLifecycleEvents.SERVER_STARTED.register(RoleStore::load);
         ServerLifecycleEvents.SERVER_STOPPING.register(RoleStore::save);
+
+        // 学习证编号计数器（W06）：服务器启动时载入，发号时先原子落盘
+        ServerLifecycleEvents.SERVER_STARTED.register(CertCounter::load);
 
         LOGGER.info("mugewrayce mod initialized.");
     }

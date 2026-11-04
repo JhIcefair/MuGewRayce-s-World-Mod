@@ -27,6 +27,9 @@ public final class ModDataPaths {
     /** 角色文件名（新路径）。 */
     public static final String ROLES_FILE_NAME = "roles.json";
 
+    /** 学习证编号计数器文件名（W06，接口约定 §5）。 */
+    public static final String CERT_COUNTER_FILE_NAME = "cert_counter.json";
+
     /** 旧角色文件名（世界根，迁移源）。 */
     public static final String LEGACY_ROLES_FILE_NAME = "mugewrayce_roles.json";
 
@@ -64,6 +67,16 @@ public final class ModDataPaths {
         return worldRoot == null
                 ? Path.of(LEGACY_ROLES_FILE_NAME)
                 : worldRoot.resolve(LEGACY_ROLES_FILE_NAME);
+    }
+
+    /** {@code <world>/data/mugewrayce-mod/cert_counter.json}（W06 学习证编号计数器）。 */
+    public static Path certCounterFile(MinecraftServer server) {
+        return certCounterFile(server.getWorldPath(LevelResource.DATA));
+    }
+
+    /** {@code <data>/mugewrayce-mod/cert_counter.json}。 */
+    public static Path certCounterFile(Path dataRoot) {
+        return dataDir(dataRoot).resolve(CERT_COUNTER_FILE_NAME);
     }
 
     /** 与目标文件同目录的原子写临时文件（{@code xxx.json.tmp}）。 */
