@@ -1,38 +1,30 @@
 package com.mugewrayce.sizeadjuster.util;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonParseException;
-import com.google.gson.reflect.TypeToken;
 import com.mugewrayce.sizeadjuster.SizeAdjusterMod;
+import com.mugewrayce.sizeadjuster.data.AtomicJson;
+import com.mugewrayce.sizeadjuster.data.ModDataPaths;
+import com.mugewrayce.sizeadjuster.data.RoleMigration;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.storage.LevelResource;
 
 import java.io.IOException;
-import java.lang.reflect.Type;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.AtomicMoveNotSupportedException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
 /**
- * 玩家角色持久化：写入世界存档根目录下的 mugewrayce_roles.json
- * （按玩家 UUID → 角色编号）。
+ * 玩家角色持久化：写入 {@code <world>/data/mugewrayce-mod/roles.json}（按 UUID → 角色编号）。
  *
- * 服务器启动（进入/重进世界，SERVER_STARTED）时载入；
+ * <p>W05 起：载入前先由 {@link RoleMigration} 把旧世界根 {@code mugewrayce_roles.json}
+ * 迁移到新路径；正常迁移后旧文件不再存在（接口约定 §5）。</p>
+ *
+ * <p>服务器启动（进入/重进世界，SERVER_STARTED）时载入；
  * 角色变更时立即写盘（setRole → writeNow）；服务器停止（SERVER_STOPPING）时再写一次。
- * 采用**原子写入**（先写临时文件再替换）防止写盘中途崩溃导致 JSON 损坏；
- * 载入对损坏文件宽容处理（记为无存档，不阻塞进入世界）。
+ * 写入走 {@link AtomicJson} 的原子替换；载入对损坏文件宽容处理——
+ * 记录日志、清空内存缓存、允许进入世界，下一次写入再重建文件。</p>
  */
 public final class RoleStore {
-
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-    private static final Type MAP_TYPE = new TypeToken<Map<String, Integer>>() {
-    }.getType();
 
     /** 内存缓存（本存档会话）；所有读写加锁保证线程安全。 */
     private static final Map<UUID, Integer> CACHE = new HashMap<>();
@@ -41,37 +33,25 @@ public final class RoleStore {
     private RoleStore() {
     }
 
-    /** 服务器启动（进入/重进世界）时载入角色。 */
+    /** 服务器启动（进入/重进世界）时：先迁移旧文件，再载入角色。 */
     public static void load(MinecraftServer server) {
-        Path world = server.getWorldPath(LevelResource.ROOT);
-        Path target = world.resolve("mugewrayce_roles.json");
+        Path dataRoot = server.getWorldPath(LevelResource.DATA);
+        Map<String, Integer> raw = RoleMigration.migrate(dataRoot);
+        Map<UUID, Integer> parsed = sanitize(raw);
         synchronized (CACHE) {
             CACHE.clear();
-            filePath = target;
-            if (Files.exists(target)) {
-                try {
-                    String json = Files.readString(target, StandardCharsets.UTF_8);
-                    Map<String, Integer> raw = GSON.fromJson(json, MAP_TYPE);
-                    if (raw != null) {
-                        for (Map.Entry<String, Integer> e : raw.entrySet()) {
-                            try {
-                                CACHE.put(UUID.fromString(e.getKey()), e.getValue());
-                            } catch (IllegalArgumentException ignored) {
-                                // 非法 UUID 键：忽略
-                            }
-                        }
-                    }
-                } catch (IOException | JsonParseException e) {
-                    // 读盘/JSON 损坏：宽容处理——记为无存档，不阻塞进入世界
-                    SizeAdjusterMod.LOGGER.warn("角色存档 {} 读取失败，已忽略并重建：{}", target, e.toString());
-                    CACHE.clear();
-                }
-            }
+            CACHE.putAll(parsed);
+            // 即使迁移/读取失败也记住路径：下一次写入会重建新文件
+            filePath = ModDataPaths.rolesFile(dataRoot);
         }
+        SizeAdjusterMod.LOGGER.info("角色存档已载入 {} 条（{}）", parsed.size(), filePath);
     }
 
     /** 服务器停止（退出世界/关闭游戏）时再写一次。 */
     public static void save(MinecraftServer server) {
+        synchronized (CACHE) {
+            filePath = ModDataPaths.rolesFile(server.getWorldPath(LevelResource.DATA));
+        }
         writeNow();
     }
 
@@ -89,15 +69,8 @@ public final class RoleStore {
             for (Map.Entry<UUID, Integer> e : CACHE.entrySet()) {
                 raw.put(e.getKey().toString(), e.getValue());
             }
-            // 原子写入：先写临时文件，成功后替换正式文件（避免写盘中途崩溃损坏）
-            Path tmp = filePath.resolveSibling(filePath.getFileName() + ".tmp");
             try {
-                Files.writeString(tmp, GSON.toJson(raw), StandardCharsets.UTF_8);
-                try {
-                    Files.move(tmp, filePath, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
-                } catch (AtomicMoveNotSupportedException e) {
-                    Files.move(tmp, filePath, StandardCopyOption.REPLACE_EXISTING);
-                }
+                AtomicJson.write(filePath, raw);
             } catch (IOException e) {
                 // 写盘失败：内存数据保留，下次再试
                 SizeAdjusterMod.LOGGER.warn("角色存档写入失败（内存已保留）：{}", e.toString());
@@ -116,5 +89,34 @@ public final class RoleStore {
             CACHE.put(uuid, role);
         }
         writeNow();
+    }
+
+    /**
+     * 校验并转换原始角色数据：非法 UUID 键忽略、非法角色编号回退 {@link PlayerRoles#ROLE_DEFAULT}。
+     *
+     * <p>由 {@link #load(MinecraftServer)} 调用；也供离线自检直接复用（不依赖服务端）。</p>
+     */
+    public static Map<UUID, Integer> sanitize(Map<String, Integer> raw) {
+        Map<UUID, Integer> parsed = new HashMap<>();
+        if (raw == null || raw.isEmpty()) {
+            return parsed;
+        }
+        for (Map.Entry<String, Integer> e : raw.entrySet()) {
+            UUID uuid;
+            try {
+                uuid = UUID.fromString(e.getKey());
+            } catch (IllegalArgumentException | NullPointerException ex) {
+                SizeAdjusterMod.LOGGER.debug("角色存档中的非法 UUID 键已忽略：{}", e.getKey());
+                continue;
+            }
+            Integer value = e.getValue();
+            int role = value == null ? PlayerRoles.ROLE_DEFAULT : value;
+            if (!PlayerRoles.isValid(role)) {
+                SizeAdjusterMod.LOGGER.warn("角色存档中 {} 的角色编号 {} 非法，已回退为默认", uuid, role);
+                role = PlayerRoles.ROLE_DEFAULT;
+            }
+            parsed.put(uuid, role);
+        }
+        return parsed;
     }
 }
