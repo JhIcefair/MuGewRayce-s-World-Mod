@@ -1,6 +1,6 @@
 package com.mugewrayce.sizeadjuster.entity;
 
-import com.mugewrayce.sizeadjuster.item.PurificationEffects;
+import com.mugewrayce.sizeadjuster.item.EquipoiseEffects;
 import com.mugewrayce.sizeadjuster.util.PlayerRoles;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -26,7 +26,7 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * 净化魔法阵（法杖施法模式，贴图同净化水晶法阵 purification_circle.png）。
+ * 净化魔法阵（法杖施法模式，贴图同净化水晶法阵 equipoise_circle.png）。
  *
  * 类型（formationType，同步到客户端供渲染）：
  * - SINGLE_HEAL（单体治愈·对自己）：跟随施法者本人脚下；持续对施法者治愈。
@@ -39,7 +39,7 @@ import java.util.UUID;
  * 除防御阵需保持长按外，其余阵长按召唤、松开后保留 30 秒并持续作用
  * （单体治愈在此期间继续跟随施法者）。
  */
-public class PurificationFormationEntity extends Entity {
+public class EquipoiseFormationEntity extends Entity {
 
     public static final int TYPE_SINGLE_HEAL = 1;
     public static final int TYPE_GROUP_HEAL = 2;
@@ -62,12 +62,12 @@ public class PurificationFormationEntity extends Entity {
     public static final double DEFENSE_DISTANCE = 0.5;
 
     private static final EntityDataAccessor<Integer> DATA_TYPE =
-            SynchedEntityData.defineId(PurificationFormationEntity.class, EntityDataSerializers.INT);
+            SynchedEntityData.defineId(EquipoiseFormationEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Float> DATA_SIZE =
-            SynchedEntityData.defineId(PurificationFormationEntity.class, EntityDataSerializers.FLOAT);
+            SynchedEntityData.defineId(EquipoiseFormationEntity.class, EntityDataSerializers.FLOAT);
 
     /** 当前生效的防御阵（玩家 UUID → 阵），供伤害拦截查询。 */
-    private static final Map<UUID, PurificationFormationEntity> ACTIVE_DEFENSE = new HashMap<>();
+    private static final Map<UUID, EquipoiseFormationEntity> ACTIVE_DEFENSE = new HashMap<>();
 
     private UUID ownerUuid;
     private boolean persisting;
@@ -82,12 +82,12 @@ public class PurificationFormationEntity extends Entity {
     /** 剩余维持 tick（3 秒，受击重置）。 */
     private int shieldLife;
 
-    public PurificationFormationEntity(EntityType<? extends PurificationFormationEntity> type, Level level) {
+    public EquipoiseFormationEntity(EntityType<? extends EquipoiseFormationEntity> type, Level level) {
         super(type, level);
     }
 
-    public PurificationFormationEntity(Level level, Player owner, int formationType) {
-        this(ModEntities.PURIFICATION_FORMATION, level);
+    public EquipoiseFormationEntity(Level level, Player owner, int formationType) {
+        this(ModEntities.EQUIPOISE_FORMATION, level);
         this.ownerUuid = owner.getUUID();
         this.entityData.set(DATA_TYPE, formationType);
     }
@@ -145,7 +145,7 @@ public class PurificationFormationEntity extends Entity {
         return this.shieldRingSlot >= 0;
     }
 
-    public static void activateDefense(UUID owner, PurificationFormationEntity formation) {
+    public static void activateDefense(UUID owner, EquipoiseFormationEntity formation) {
         ACTIVE_DEFENSE.put(owner, formation);
     }
 
@@ -155,8 +155,16 @@ public class PurificationFormationEntity extends Entity {
 
     /** 防御阵是否正在为该玩家生效（伤害拦截用）。 */
     public static boolean isDefenseActive(UUID owner) {
-        PurificationFormationEntity formation = ACTIVE_DEFENSE.get(owner);
+        EquipoiseFormationEntity formation = ACTIVE_DEFENSE.get(owner);
         return formation != null && formation.isAlive();
+    }
+
+    /**
+     * 该伤害是否来自本模组的魔法阵实体。
+     * 统一规则 B-2：防御魔法阵（净化防御阵 / icefair 自动防御阵）不能抵挡来自魔法阵的伤害。
+     */
+    public static boolean isFormationDamage(DamageSource source) {
+        return source.getDirectEntity() instanceof EquipoiseFormationEntity;
     }
 
     /** 仅防御阵 / icefair 自动防御阵可被投射物命中（像盾牌一样挡在前方/来源方向）。 */
@@ -262,10 +270,10 @@ public class PurificationFormationEntity extends Entity {
 
     private void applyHeal(Player owner) {
         if (this.getFormationType() == TYPE_SINGLE_HEAL) {
-            PurificationEffects.apply(owner, PurificationEffects.FORMATION_DURATION_TICKS);
+            EquipoiseEffects.apply(owner, EquipoiseEffects.FORMATION_DURATION_TICKS);
         } else {
             for (LivingEntity entity : this.entitiesInRange()) {
-                PurificationEffects.apply(entity, PurificationEffects.FORMATION_DURATION_TICKS);
+                EquipoiseEffects.apply(entity, EquipoiseEffects.FORMATION_DURATION_TICKS);
             }
         }
     }

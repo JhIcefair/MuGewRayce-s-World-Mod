@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "mugewrayce-mod:item/purification_staff"
+    "layer0": "mugewrayce-mod:item/equipoise_staff"
   }
 }

@@ -2,12 +2,12 @@
   "layers": {
     "humanoid": [
       {
-        "texture": "mugewrayce-mod:purification_halo"
+        "texture": "mugewrayce-mod:equipoise_halo"
       }
     ],
     "humanoid_baby": [
       {
-        "texture": "mugewrayce-mod:purification_halo"
+        "texture": "mugewrayce-mod:equipoise_halo"
       }
     ]
   }

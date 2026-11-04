@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:item/spear_in_hand",
   "textures": {
-    "layer0": "mugewrayce-mod:item/purification_staff_in_hand"
+    "layer0": "mugewrayce-mod:item/equipoise_staff_in_hand"
   }
 }

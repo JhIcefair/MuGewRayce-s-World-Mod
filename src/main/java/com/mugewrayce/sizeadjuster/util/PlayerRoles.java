@@ -1,8 +1,8 @@
 package com.mugewrayce.sizeadjuster.util;
 
 import com.mugewrayce.sizeadjuster.entity.IcefairShields;
-import com.mugewrayce.sizeadjuster.entity.PurificationFormationEntity;
-import com.mugewrayce.sizeadjuster.entity.PurificationOrbEntity;
+import com.mugewrayce.sizeadjuster.entity.EquipoiseFormationEntity;
+import com.mugewrayce.sizeadjuster.entity.EquipoiseOrbEntity;
 import net.minecraft.core.Holder;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -197,7 +197,7 @@ public final class PlayerRoles {
      */
     public static boolean isMagicDamage(DamageSource source) {
         Entity direct = source.getDirectEntity();
-        if (direct instanceof PurificationOrbEntity || direct instanceof PurificationFormationEntity) {
+        if (direct instanceof EquipoiseOrbEntity || direct instanceof EquipoiseFormationEntity) {
             return true;
         }
         Holder<DamageType> type = source.typeHolder();

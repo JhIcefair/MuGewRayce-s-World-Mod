@@ -31,16 +31,15 @@ public final class ModCreativeTabs {
                 .title(Component.translatable("itemGroup." + TAB_ID))
                 .icon(() -> new ItemStack(ModItems.originToken))
                 .displayItems((displayParameters, output) -> {
-                    output.accept(ModItems.purificationCrystal);
-                    output.accept(ModItems.purificationStaff);
-                    output.accept(ModItems.purificationHolySword);
-                    output.accept(ModItems.purificationLongSpear);
-                    output.accept(ModItems.purificationHolyBow);
+                    output.accept(ModItems.equipoiseCrystal);
+                    output.accept(ModItems.equipoiseStaff);
+                    output.accept(ModItems.equipoiseSword);
+                    output.accept(ModItems.equipoiseBow);
                     output.accept(ModItems.zeroReset);
                     output.accept(ModItems.bookOfLing);
                     output.accept(ModItems.originToken);
                     output.accept(ModItems.baishanBag);
-                    output.accept(ModItems.purificationHalo);
+                    output.accept(ModItems.equipoiseHalo);
                     output.accept(ModItems.lifeConversionToken);
                 })
                 .build();

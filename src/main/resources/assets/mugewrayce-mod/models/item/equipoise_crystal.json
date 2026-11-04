@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:item/handheld",
   "textures": {
-    "layer0": "mugewrayce-mod:item/purification_holy_sword"
+    "layer0": "mugewrayce-mod:item/equipoise_crystal"
   }
 }

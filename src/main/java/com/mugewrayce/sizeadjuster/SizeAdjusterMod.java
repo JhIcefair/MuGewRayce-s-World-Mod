@@ -3,7 +3,8 @@ package com.mugewrayce.sizeadjuster;
 import com.mugewrayce.sizeadjuster.command.SizeCommand;
 import com.mugewrayce.sizeadjuster.data.CertCounter;
 import com.mugewrayce.sizeadjuster.entity.IcefairShields;
-import com.mugewrayce.sizeadjuster.entity.PurificationFormationEntity;
+import com.mugewrayce.sizeadjuster.entity.EquipoiseFormationEntity;
+import com.mugewrayce.sizeadjuster.item.EquipoiseStaffItem;
 import com.mugewrayce.sizeadjuster.network.ModNetwork;
 import com.mugewrayce.sizeadjuster.payload.RoleActionPayload;
 import com.mugewrayce.sizeadjuster.payload.RoleStatusPayload;
@@ -11,7 +12,7 @@ import com.mugewrayce.sizeadjuster.payload.SizeActionPayload;
 import com.mugewrayce.sizeadjuster.payload.SizeStatusPayload;
 import com.mugewrayce.sizeadjuster.payload.StaffModePayload;
 import com.mugewrayce.sizeadjuster.registry.ModRegistry;
-import com.mugewrayce.sizeadjuster.switchitem.SwitchItemPayload;
+import com.mugewrayce.sizeadjuster.switchitem.EquipoiseSwitchPayload;
 import com.mugewrayce.sizeadjuster.util.PlayerRoles;
 import com.mugewrayce.sizeadjuster.util.PlayerStateCleanup;
 import com.mugewrayce.sizeadjuster.util.RoleStore;
@@ -36,7 +37,8 @@ public class SizeAdjusterMod implements ModInitializer {
         ModRegistry.register();
         // 2.0.0 网络骨架：C2S 意图 / S2C 状态（W04，临时测试包）
         ModNetwork.register();
-        SwitchItemPayload.register();
+        EquipoiseSwitchPayload.register();
+        EquipoiseStaffItem.registerEvents();
         SizeActionPayload.register();
         SizeStatusPayload.register();
         StaffModePayload.register();
@@ -60,8 +62,11 @@ public class SizeAdjusterMod implements ModInitializer {
         //      false=取消/抵挡伤害，true=允许伤害生效。
         ServerLivingEntityEvents.ALLOW_DAMAGE.register((entity, source, amount) -> {
             if (entity instanceof Player player) {
-                // 手动防御魔法阵：像盾牌一样抵御一切伤害
-                if (PurificationFormationEntity.isDefenseActive(player.getUUID())) {
+                // 手动防御魔法阵：像盾牌一样抵御一切伤害；
+                // 统一规则 B-2：不能抵挡来自魔法阵的伤害（icefair 自动防御阵同样在
+                // IcefairShields.onAttackDamage 里放行魔法阵伤害）。
+                if (EquipoiseFormationEntity.isDefenseActive(player.getUUID())
+                        && !EquipoiseFormationEntity.isFormationDamage(source)) {
                     return false;
                 }
                 int role = PlayerRoles.getRole(player);

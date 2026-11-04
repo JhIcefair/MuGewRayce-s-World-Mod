@@ -3,7 +3,7 @@ package com.mugewrayce.sizeadjuster.client;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
-import com.mugewrayce.sizeadjuster.entity.PurificationFormationEntity;
+import com.mugewrayce.sizeadjuster.entity.EquipoiseFormationEntity;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
@@ -15,20 +15,20 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.Identifier;
 
 /**
- * 净化魔法阵（法杖施法）渲染：贴图同净化水晶法阵（purification_circle.png），
+ * 净化魔法阵（法杖施法）渲染：贴图同净化水晶法阵（equipoise_circle.png），
  * 半透明 + 自发光（entityTranslucentEmissive），发光亮度 50%（同净化水晶法阵）。
  * - 单体/群体（水平）：地面水平方形，边长 size（单 2 / 群 6）。
  * - 防御（竖立）：竖直方形，边长 size（随身高），旋转朝向玩家视角（跟随视角）。
  */
-public class PurificationFormationRenderer
-        extends EntityRenderer<PurificationFormationEntity, PurificationFormationRenderer.State> {
+public class EquipoiseFormationRenderer
+        extends EntityRenderer<EquipoiseFormationEntity, EquipoiseFormationRenderer.State> {
 
     private static final Identifier TEXTURE = Identifier.fromNamespaceAndPath(
-            "mugewrayce-mod", "textures/entity/purification_circle.png");
+            "mugewrayce-mod", "textures/entity/equipoise_circle.png");
 
     private static final RenderType RENDER_TYPE = RenderTypes.entityTranslucentEmissive(TEXTURE);
 
-    public PurificationFormationRenderer(EntityRendererProvider.Context context) {
+    public EquipoiseFormationRenderer(EntityRendererProvider.Context context) {
         super(context);
     }
 
@@ -46,7 +46,7 @@ public class PurificationFormationRenderer
     }
 
     @Override
-    public void extractRenderState(PurificationFormationEntity entity, State state, float partialTick) {
+    public void extractRenderState(EquipoiseFormationEntity entity, State state, float partialTick) {
         super.extractRenderState(entity, state, partialTick);
         state.formationType = entity.getFormationType();
         state.size = entity.getSize();
@@ -55,15 +55,15 @@ public class PurificationFormationRenderer
     }
 
     @Override
-    public boolean affectedByCulling(PurificationFormationEntity entity) {
+    public boolean affectedByCulling(EquipoiseFormationEntity entity) {
         return false; // 阵法大小/形状随类型变化，关闭剔除避免远处/侧面不可见
     }
 
     @Override
     public void submit(State state, PoseStack poseStack, SubmitNodeCollector collector, CameraRenderState camera) {
         poseStack.pushPose();
-        if (state.formationType == PurificationFormationEntity.TYPE_DEFENSE
-                || state.formationType == PurificationFormationEntity.TYPE_ICEFAIR_SHIELD) {
+        if (state.formationType == EquipoiseFormationEntity.TYPE_DEFENSE
+                || state.formationType == EquipoiseFormationEntity.TYPE_ICEFAIR_SHIELD) {
             // 防御阵 / icefair 自动防御阵：竖立竖直平面，绕 Y 旋转朝向来源方向
             poseStack.mulPose(Axis.YP.rotationDegrees(-state.yRot));
             poseStack.mulPose(Axis.XP.rotationDegrees(state.xRot));

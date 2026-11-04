@@ -1,6 +1,6 @@
 package com.mugewrayce.sizeadjuster.item;
 
-import com.mugewrayce.sizeadjuster.entity.PurificationOrbEntity;
+import com.mugewrayce.sizeadjuster.entity.EquipoiseOrbEntity;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -15,12 +15,12 @@ import net.minecraft.world.level.Level;
  * - 单击：立即发射一枚；
  * - 长按：进入使用状态由 onUseTick 控制连发，连发间隔 2 tick（0.1 秒）
  *   ——原版按住右键每 4 tick 才重复一次 use()，本物品改为每 2 tick，快一倍。
- * - 弹道/命中/消失等见 PurificationOrbEntity 归零变体
+ * - 弹道/命中/消失等见 EquipoiseOrbEntity 归零变体
  *   （直线飞行、2000 伤害、命中方块破块后消失、1024 格消失）。
  */
 public class ZeroResetItem extends Item {
 
-    private static final float SHOOT_VELOCITY = PurificationOrbEntity.VELOCITY;
+    private static final float SHOOT_VELOCITY = EquipoiseOrbEntity.VELOCITY;
     private static final float SHOOT_INACCURACY = 0.0F;
 
     /** 连发间隔（tick）：原版按住右键每 4 tick 重复一次，本物品每 2 tick（快一倍）。 */
@@ -68,8 +68,8 @@ public class ZeroResetItem extends Item {
     }
 
     private void fireOrb(ServerLevel level, Player player) {
-        PurificationOrbEntity orb = new PurificationOrbEntity(level, player, false);
-        orb.setVariant(PurificationOrbEntity.VARIANT_ZERO_RESET);
+        EquipoiseOrbEntity orb = new EquipoiseOrbEntity(level, player, false);
+        orb.configureZeroReset();
         orb.setPos(player.getX(), player.getEyeY() - 0.1, player.getZ());
         orb.shootFromRotation(player, player.getXRot(), player.getYRot(),
                 0.0F, SHOOT_VELOCITY, SHOOT_INACCURACY);

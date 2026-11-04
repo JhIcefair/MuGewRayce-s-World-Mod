@@ -1,6 +1,0 @@
-{
-  "parent": "mugewrayce-mod:item/purification_holy_bow",
-  "textures": {
-    "layer0": "mugewrayce-mod:item/purification_holy_bow_pulling_0"
-  }
-}

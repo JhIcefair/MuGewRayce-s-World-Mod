@@ -2,7 +2,7 @@ package com.mugewrayce.sizeadjuster.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mugewrayce.sizeadjuster.entity.PurificationOrbEntity;
+import com.mugewrayce.sizeadjuster.entity.EquipoiseOrbEntity;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
@@ -16,21 +16,21 @@ import net.minecraft.resources.Identifier;
 /**
  * 净化魔法球渲染：面向相机的平面贴图（billboard），尺寸 0.25（与物品掉落物一致）。
  * 按实体变体选择贴图：
- * - 法杖（VARIANT_STAFF）：textures/entity/purification_orb.png（ls\15.png）
- * - 归零（VARIANT_ZERO_RESET）：textures/entity/purification_orb_zero.png（ls\16.png）
+ * - 法杖（VARIANT_STAFF）：textures/entity/equipoise_orb.png（ls\15.png）
+ * - 归零（VARIANT_ZERO_RESET）：textures/entity/equipoise_orb_zero.png（ls\16.png）
  */
-public class PurificationOrbRenderer extends EntityRenderer<PurificationOrbEntity, PurificationOrbRenderer.State> {
+public class EquipoiseOrbRenderer extends EntityRenderer<EquipoiseOrbEntity, EquipoiseOrbRenderer.State> {
 
     private static final Identifier STAFF_TEXTURE = Identifier.fromNamespaceAndPath(
-            "mugewrayce-mod", "textures/entity/purification_orb.png");
+            "mugewrayce-mod", "textures/entity/equipoise_orb.png");
 
     private static final Identifier ZERO_RESET_TEXTURE = Identifier.fromNamespaceAndPath(
-            "mugewrayce-mod", "textures/entity/purification_orb_zero.png");
+            "mugewrayce-mod", "textures/entity/equipoise_orb_zero.png");
 
     private static final RenderType STAFF_RENDER_TYPE = RenderTypes.entityCutout(STAFF_TEXTURE);
     private static final RenderType ZERO_RESET_RENDER_TYPE = RenderTypes.entityCutout(ZERO_RESET_TEXTURE);
 
-    public PurificationOrbRenderer(EntityRendererProvider.Context context) {
+    public EquipoiseOrbRenderer(EntityRendererProvider.Context context) {
         super(context);
     }
 
@@ -45,7 +45,7 @@ public class PurificationOrbRenderer extends EntityRenderer<PurificationOrbEntit
     }
 
     @Override
-    public void extractRenderState(PurificationOrbEntity entity, State state, float partialTick) {
+    public void extractRenderState(EquipoiseOrbEntity entity, State state, float partialTick) {
         super.extractRenderState(entity, state, partialTick);
         state.variant = entity.getVariant();
     }
@@ -56,7 +56,7 @@ public class PurificationOrbRenderer extends EntityRenderer<PurificationOrbEntit
         poseStack.scale(0.25F, 0.25F, 0.25F);
         poseStack.mulPose(camera.orientation);
         RenderType renderType =
-                state.variant == PurificationOrbEntity.VARIANT_ZERO_RESET ? ZERO_RESET_RENDER_TYPE : STAFF_RENDER_TYPE;
+                state.variant == EquipoiseOrbEntity.VARIANT_ZERO_RESET ? ZERO_RESET_RENDER_TYPE : STAFF_RENDER_TYPE;
         collector.submitCustomGeometry(poseStack, renderType, (pose, consumer) -> {
             vertex(consumer, pose, state.lightCoords, -0.5F, -0.5F, 0.0F, 0.0F, 0.0F);
             vertex(consumer, pose, state.lightCoords, 0.5F, -0.5F, 0.0F, 1.0F, 0.0F);
