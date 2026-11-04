@@ -1,6 +1,12 @@
 package com.mugewrayce.sizeadjuster.item;
 
 import com.mugewrayce.sizeadjuster.SizeAdjusterMod;
+import com.mugewrayce.sizeadjuster.component.ApplicationData;
+import com.mugewrayce.sizeadjuster.component.CertData;
+import com.mugewrayce.sizeadjuster.component.ModComponents;
+import com.mugewrayce.sizeadjuster.component.ProficiencyData;
+import com.mugewrayce.sizeadjuster.component.PromotionData;
+import com.mugewrayce.sizeadjuster.magic.MagicDataRules;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Item;
@@ -16,16 +22,15 @@ import java.util.Set;
  * （学习证编号 / 类型 / 模式 / 目标等级等）才能用，创造模式直接取的没有组件：</p>
  *
  * <ul>
- *   <li>{@code magic_study_certificate} 魔法学习证；</li>
- *   <li>{@code beginner_magic_exam_application} 初学魔法考试申请书；</li>
- *   <li>{@code magic_trial_application} 魔法试炼申请书；</li>
- *   <li>{@code magic_proficiency_certificate} 魔法熟练证明；</li>
- *   <li>{@code magic_trial_promotion_certificate} 魔法试炼晋级认证。</li>
+ *   <li>{@code magic_study_certificate} 魔法学习证 → {@link CertData}；</li>
+ *   <li>{@code beginner_magic_exam_application} / {@code magic_trial_application} 申请书 → {@link ApplicationData}；</li>
+ *   <li>{@code magic_proficiency_certificate} 魔法熟练证明 → {@link ProficiencyData}；</li>
+ *   <li>{@code magic_trial_promotion_certificate} 魔法试炼晋级认证 → {@link PromotionData}。</li>
  * </ul>
  *
- * <p><b>本包只定义判定规则与占位</b>：真实组件（{@code CertData} 等）由 W03 注册、
- * W06 实现，届时把 {@link #hasRequiredData(ItemStack)} 换成读组件即可，
- * 本类对外签名不变。界面按"无效证 / 无效物品"处理（红字提示属 W15 GUI）。</p>
+ * <p>W06 起不再占位：组件存在<b>且内部字段合法</b>才算有效（如 {@code cert.no=0}、
+ * {@code targetLevel} 越界仍算无效）；法杖 / 水晶 / 附加书不属于证书类，不在此集合。
+ * 正式物品要到 W09 才注册，真实物品上的无效提示留 W09 / W15 运行验收。</p>
  */
 public final class InvalidItemRules {
 
@@ -63,20 +68,44 @@ public final class InvalidItemRules {
      * 空栈返回 {@code false}（空手不是"无效物品"）。
      */
     public static boolean isInvalid(ItemStack stack) {
-        if (stack == null || stack.isEmpty() || !requiresDataComponent(stack.getItem())) {
+        if (stack == null || stack.isEmpty()) {
             return false;
         }
-        return !hasRequiredData(stack);
+        Identifier id = BuiltInRegistries.ITEM.getKey(stack.getItem());
+        if (!requiresDataComponent(id)) {
+            return false;
+        }
+        return !hasValidRequiredData(id.getPath(), stack);
     }
 
     /**
-     * 是否带有该类物品必需的数据组件。
+     * 按注册名读取对应组件并做合法性校验（W06）。
      *
-     * <p>TODO(W03/W06)：组件类型在 W03 注册、W06 实现；在那之前任何栈都拿不到组件，
-     * 因此这里固定返回 {@code false}——与草案"创造模式直接拿到的证不可用"一致。
-     * 实现组件后改成"读对应 ComponentType 是否为默认值"。</p>
+     * <p>路径 → 组件的映射即本方法；未列入"无组件即无效"的路径一律返回 {@code false}。
+     * 单独暴露出来便于离线自检（真实物品未注册时也能用任意 {@code ItemStack} 验证映射）。</p>
      */
-    private static boolean hasRequiredData(ItemStack stack) {
-        return false;
+    public static boolean hasValidRequiredData(String path, ItemStack stack) {
+        if (path == null || stack == null || stack.isEmpty()) {
+            return false;
+        }
+        return switch (path) {
+            case "magic_study_certificate" -> {
+                CertData data = stack.get(ModComponents.CERT_DATA);
+                yield data != null && MagicDataRules.isValidCert(data);
+            }
+            case "beginner_magic_exam_application", "magic_trial_application" -> {
+                ApplicationData data = stack.get(ModComponents.APPLICATION_DATA);
+                yield data != null && MagicDataRules.isValidApplication(data);
+            }
+            case "magic_proficiency_certificate" -> {
+                ProficiencyData data = stack.get(ModComponents.PROFICIENCY_DATA);
+                yield data != null && MagicDataRules.isValidProficiency(data);
+            }
+            case "magic_trial_promotion_certificate" -> {
+                PromotionData data = stack.get(ModComponents.PROMOTION_DATA);
+                yield data != null && MagicDataRules.isValidPromotion(data);
+            }
+            default -> false;
+        };
     }
 }
