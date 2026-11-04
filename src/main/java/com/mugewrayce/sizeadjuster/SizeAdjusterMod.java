@@ -3,6 +3,7 @@ package com.mugewrayce.sizeadjuster;
 import com.mugewrayce.sizeadjuster.command.SizeCommand;
 import com.mugewrayce.sizeadjuster.entity.IcefairShields;
 import com.mugewrayce.sizeadjuster.entity.PurificationFormationEntity;
+import com.mugewrayce.sizeadjuster.network.ModNetwork;
 import com.mugewrayce.sizeadjuster.payload.RoleActionPayload;
 import com.mugewrayce.sizeadjuster.payload.RoleStatusPayload;
 import com.mugewrayce.sizeadjuster.payload.SizeActionPayload;
@@ -32,6 +33,8 @@ public class SizeAdjusterMod implements ModInitializer {
         LOGGER.info("mugewrayce mod initializing for Minecraft 26.1...");
 
         ModRegistry.register();
+        // 2.0.0 网络骨架：C2S 意图 / S2C 状态（W04，临时测试包）
+        ModNetwork.register();
         SwitchItemPayload.register();
         SizeActionPayload.register();
         SizeStatusPayload.register();

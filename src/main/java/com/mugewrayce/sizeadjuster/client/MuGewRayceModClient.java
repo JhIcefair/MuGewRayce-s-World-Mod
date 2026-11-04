@@ -3,6 +3,7 @@ package com.mugewrayce.sizeadjuster.client;
 import com.mugewrayce.sizeadjuster.SizeAdjusterMod;
 import com.mugewrayce.sizeadjuster.clientbridge.ScreenOpener;
 import com.mugewrayce.sizeadjuster.clientbridge.ScreenOpenerHolder;
+import com.mugewrayce.sizeadjuster.client.network.W04TestClient;
 import com.mugewrayce.sizeadjuster.container.BaishanBagMenu;
 import com.mugewrayce.sizeadjuster.entity.ModEntities;
 import com.mugewrayce.sizeadjuster.payload.RoleStatusPayload;
@@ -49,6 +50,9 @@ public class MuGewRayceModClient implements ClientModInitializer {
                 "key.mugewrayce.switch",
                 GLFW.GLFW_KEY_I,
                 new KeyMapping.Category(Identifier.fromNamespaceAndPath(SizeAdjusterMod.MOD_ID, "mugewrayce"))));
+
+        // 2.0.0 网络骨架（W04，临时）：S2C 状态接收 + 客户端测试命令（W23 清理）
+        W04TestClient.register();
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             while (switchKey.consumeClick()) {
