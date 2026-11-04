@@ -1,10 +1,10 @@
 package com.mugewrayce.sizeadjuster.util;
 
 import com.mugewrayce.sizeadjuster.entity.IcefairShields;
-import com.mugewrayce.sizeadjuster.entity.PurificationFormationEntity;
-import com.mugewrayce.sizeadjuster.item.CrystalItem;
+import com.mugewrayce.sizeadjuster.entity.EquipoiseFormationEntity;
+import com.mugewrayce.sizeadjuster.item.EquipoiseCrystalItem;
+import com.mugewrayce.sizeadjuster.item.EquipoiseStaffItem;
 import com.mugewrayce.sizeadjuster.item.StaffCastModes;
-import com.mugewrayce.sizeadjuster.item.StaffItem;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.minecraft.server.level.ServerPlayer;
 
@@ -42,10 +42,10 @@ public final class PlayerStateCleanup {
     /** 清理该玩家在服务端静态表中的全部瞬态状态。 */
     public static void cleanup(ServerPlayer player) {
         UUID id = player.getUUID();
-        StaffItem.clearPlayer(id);                        // 充能魔法球 / 阵法
-        CrystalItem.clearPlayer(id);                      // 净化法阵
+        EquipoiseStaffItem.clearPlayer(id);               // 充能魔法球 / 阵法 / 持续线式
+        EquipoiseCrystalItem.clearPlayer(id);             // 净化法阵
         IcefairShields.clearShields(id);                  // icefair 自动防御阵列表
-        PurificationFormationEntity.deactivateDefense(id); // 手动防御阵（若仍在生效）
+        EquipoiseFormationEntity.deactivateDefense(id); // 手动防御阵（若仍在生效）
         StaffCastModes.clear(id);                         // 施法模式
     }
 }

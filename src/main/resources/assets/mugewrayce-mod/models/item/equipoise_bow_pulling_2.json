@@ -1,0 +1,6 @@
+{
+  "parent": "mugewrayce-mod:item/equipoise_bow",
+  "textures": {
+    "layer0": "mugewrayce-mod:item/equipoise_bow_pulling_2"
+  }
+}

@@ -20,9 +20,9 @@ import java.util.List;
  * 净化圣弓：套用原版弓功能，但无需背包中有弓箭即可发射（始终提供原版箭，
  * 且右键使用时不检查背包弓箭）。
  */
-public class HolyBowItem extends BowItem {
+public class EquipoiseBowItem extends BowItem {
 
-    public HolyBowItem(Item.Properties properties) {
+    public EquipoiseBowItem(Item.Properties properties) {
         super(properties);
     }
 

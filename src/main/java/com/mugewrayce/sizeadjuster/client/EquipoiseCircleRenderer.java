@@ -2,7 +2,7 @@ package com.mugewrayce.sizeadjuster.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mugewrayce.sizeadjuster.entity.PurificationCircleEntity;
+import com.mugewrayce.sizeadjuster.entity.EquipoiseCircleEntity;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
@@ -15,19 +15,19 @@ import net.minecraft.resources.Identifier;
 
 /**
  * 净化法阵渲染：地面水平方形贴图（法阵跟随玩家脚下），边长 2 格，
- * 贴图 textures/entity/purification_circle.png（ls\12.png，原 O12 隐藏贴图）。
+ * 贴图 textures/entity/equipoise_circle.png（ls\12.png，原 O12 隐藏贴图）。
  * 半透明 + 自发光（entityTranslucentEmissive）：贴图为半透明材质，
  * 使用正确的半透明混合管线，并全亮度渲染实现发光效果。
  */
-public class PurificationCircleRenderer extends EntityRenderer<PurificationCircleEntity, EntityRenderState> {
+public class EquipoiseCircleRenderer extends EntityRenderer<EquipoiseCircleEntity, EntityRenderState> {
 
     private static final Identifier TEXTURE = Identifier.fromNamespaceAndPath(
-            "mugewrayce-mod", "textures/entity/purification_circle.png");
+            "mugewrayce-mod", "textures/entity/equipoise_circle.png");
 
     /** 半透明 + 自发光：正确处理半透明混合，并全亮度渲染（发光）。 */
     private static final RenderType RENDER_TYPE = RenderTypes.entityTranslucentEmissive(TEXTURE);
 
-    public PurificationCircleRenderer(EntityRendererProvider.Context context) {
+    public EquipoiseCircleRenderer(EntityRendererProvider.Context context) {
         super(context);
     }
 

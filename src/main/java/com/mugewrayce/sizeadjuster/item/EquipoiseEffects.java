@@ -14,7 +14,7 @@ import net.minecraft.world.entity.LivingEntity;
  * 游戏会把传入的实例直接存入目标效果表并逐 tick 递减其时长，
  * 若复用同一个实例，首次使用后其 duration 被扣到 0，后续施加将完全无效。
  */
-public final class PurificationEffects {
+public final class EquipoiseEffects {
 
     /** 净化水晶长按效果时长：60 秒。 */
     public static final int CRYSTAL_DURATION_TICKS = 20 * 60;
@@ -32,7 +32,7 @@ public final class PurificationEffects {
             new EffectSpec(MobEffects.SATURATION, 0)
     };
 
-    private PurificationEffects() {
+    private EquipoiseEffects() {
     }
 
     /** 为目标施加全部净化治愈效果（每次全新实例，避免共享实例被游戏 tick 修改失效）。 */

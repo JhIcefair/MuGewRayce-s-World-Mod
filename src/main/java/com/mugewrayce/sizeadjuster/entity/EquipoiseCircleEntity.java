@@ -13,23 +13,23 @@ import net.minecraft.world.level.storage.ValueOutput;
 import java.util.UUID;
 
 /**
- * 净化法阵（Purification Circle）：净化水晶长按右键时出现在玩家脚下的魔法阵。
- * 贴图为 256x256（ls\12.png，原隐藏贴图 O12，新 id：textures/entity/purification_circle.png），
+ * 净化法阵（Equipoise Circle）：净化水晶长按右键时出现在玩家脚下的魔法阵。
+ * 贴图为 256x256（ls\12.png，原隐藏贴图 O12，新 id：textures/entity/equipoise_circle.png），
  * 渲染为地面水平方形（边长 2 格）。
  *
  * 生命周期由净化水晶驱动：长按期间每 tick 跟随玩家脚下位置；松开后由水晶 discard。
  * 本实体的 tick 仅做兜底清理：玩家死亡/断线/停止使用（未正常触发 release）时自行消失。
  */
-public class PurificationCircleEntity extends Entity {
+public class EquipoiseCircleEntity extends Entity {
 
     private UUID ownerUuid;
 
-    public PurificationCircleEntity(EntityType<? extends PurificationCircleEntity> type, Level level) {
+    public EquipoiseCircleEntity(EntityType<? extends EquipoiseCircleEntity> type, Level level) {
         super(type, level);
     }
 
-    public PurificationCircleEntity(Level level, Player owner) {
-        this(ModEntities.PURIFICATION_CIRCLE, level);
+    public EquipoiseCircleEntity(Level level, Player owner) {
+        this(ModEntities.EQUIPOISE_CIRCLE, level);
         this.ownerUuid = owner.getUUID();
     }
 

@@ -14,7 +14,6 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.EquipmentSlotGroup;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.item.BowItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemUseAnimation;
 import net.minecraft.world.item.ToolMaterial;
@@ -35,23 +34,20 @@ import java.util.function.Function;
  */
 public final class ModItems {
 
-    /** 净化水晶（Purification Crystal）：铁剑基础 + 面板伤害 10；右键可举起。 */
-    public static Item purificationCrystal;
+    /** 净化水晶（Equipoise Crystal）：铁剑基础 + 面板伤害 10；右键可举起。 */
+    public static Item equipoiseCrystal;
 
     /** 起源令牌（Origin Token）：由原分类图标贴图 2.png 注册为实际物品；右键可举起。 */
     public static Item originToken;
 
-    /** 净化法杖（Purification Staff）：模型同原版矛；右键可举起。 */
-    public static Item purificationStaff;
+    /** 净化法杖（Equipoise Staff）：模型同原版矛；右键可举起。 */
+    public static Item equipoiseStaff;
 
-    /** 净化圣剑（Purification Holy Sword）：面板伤害 2000、攻速 2.0；有横扫。 */
-    public static Item purificationHolySword;
+    /** 净化圣剑（Equipoise Sword）：面板伤害 2000、攻速 2.0；有横扫。 */
+    public static Item equipoiseSword;
 
-    /** 净化长枪（Purification Long Spear）：面板伤害 2000、攻速 1.8；有横扫。 */
-    public static Item purificationLongSpear;
-
-    /** 净化圣弓（Purification Holy Bow）：套用原版弓功能。 */
-    public static Item purificationHolyBow;
+    /** 净化圣弓（Equipoise Bow）：套用原版弓功能。 */
+    public static Item equipoiseBow;
 
     /** 柃之册（Book of Ling）：自家书贴图；右键打开功能选择 GUI。 */
     public static Item bookOfLing;
@@ -62,8 +58,8 @@ public final class ModItems {
     /** 百杉包（Baishan Bag）：右键打开 54 格大箱子式背包；手持模型套用木棍。 */
     public static Item baishanBag;
 
-    /** 净化光环（Purification Halo）：头盔位护甲，穿戴后外显；20护甲/20韧性/80%击退抗性；自带附魔。 */
-    public static Item purificationHalo;
+    /** 净化光环（Equipoise Halo）：头盔位护甲，穿戴后外显；20护甲/20韧性/80%击退抗性；自带附魔。 */
+    public static Item equipoiseHalo;
 
     /** 生命转换令牌（Life Conversion Token）：右键打开角色切换 GUI；贴图 ls\17.png。 */
     public static Item lifeConversionToken;
@@ -74,31 +70,27 @@ public final class ModItems {
     public static void register() {
         // 净化水晶：铁剑基础 + 面板伤害 10（不叠加材料加成）+ 火焰免疫 + 不可破坏 + 举起；
         // 长按右键提供增益状态效果（力量X/生命恢复20/抗性提升50/抗火/伤害吸收X/饱和），松开后维持 60 秒
-        purificationCrystal = registerItem("purification_crystal",
+        equipoiseCrystal = registerItem("equipoise_crystal",
                 base(new Item.Properties().sword(ToolMaterial.IRON, 0.0F, -2.4F)
                         .attributes(damageModifiers(9.0, -2.4))),
-                CrystalItem::new);
+                EquipoiseCrystalItem::new);
 
         // 起源令牌：由原分类图标物品转为实际物品（贴图 2.png 不变），右键仅右臂举平（BRUSH 单臂动画）
         originToken = registerItem("origin_token", base(new Item.Properties()),
                 props -> new LiftableItem(props, ItemUseAnimation.BRUSH));
 
-        // 净化法杖：右键长按举起，松开发射雪球
-        purificationStaff = registerItem("purification_staff",
-                base(new Item.Properties()), StaffItem::new);
+        // 净化法杖：右键长按施法，按 StaffCastModes 的 7 种模式释放
+        equipoiseStaff = registerItem("equipoise_staff",
+                base(new Item.Properties()), EquipoiseStaffItem::new);
 
         // 净化圣剑：钻石剑基础 + 面板伤害 2000、攻速 2.0（不叠加材料加成）
-        purificationHolySword = registerItem("purification_holy_sword",
+        equipoiseSword = registerItem("equipoise_sword",
                 base(new Item.Properties().sword(ToolMaterial.DIAMOND, 0.0F, -2.0F)
                         .attributes(damageModifiers(1999.0, -2.0))));
-        // 净化长枪：钻石剑基础 + 面板伤害 2000、攻速 1.8（不叠加材料加成）
-        purificationLongSpear = registerItem("purification_long_spear",
-                base(new Item.Properties().sword(ToolMaterial.DIAMOND, 0.0F, -2.2F)
-                        .attributes(damageModifiers(1999.0, -2.2))));
 
         // 净化圣弓：套用原版弓（耐久 384，可附魔，右键蓄力）；无需背包有箭即可发射
-        purificationHolyBow = registerItem("purification_holy_bow",
-                base(new Item.Properties().durability(384).enchantable(1)), HolyBowItem::new);
+        equipoiseBow = registerItem("equipoise_bow",
+                base(new Item.Properties().durability(384).enchantable(1)), EquipoiseBowItem::new);
 
         // 柃之册：模型贴图套用自家书贴图（10.png）；右键打开功能选择 GUI
         bookOfLing = registerItem("book_of_ling", new Item.Properties(), BookOfLingItem::new);
@@ -110,10 +102,10 @@ public final class ModItems {
         baishanBag = registerItem("baishan_bag",
                 new Item.Properties().stacksTo(1), BaishanBagItem::new);
 
-        // 净化光环：头盔位护甲（EQUIPPABLE 组件，右键自动穿戴，assetId → equipment/purification_halo.json → 穿戴外显）；
+        // 净化光环：头盔位护甲（EQUIPPABLE 组件，右键自动穿戴，assetId → equipment/equipoise_halo.json → 穿戴外显）；
         // 20 护甲 / 20 韧性 / 80% 击退抗性；自带附魔（延迟组件，随注册表就绪后解析）；
         // 火焰免疫 + 不可破坏（base）
-        purificationHalo = registerItem("purification_halo",
+        equipoiseHalo = registerItem("equipoise_halo",
                 base(new Item.Properties().stacksTo(1)
                         .attributes(haloModifiers())
                         .component(DataComponents.EQUIPPABLE, haloEquippable())
@@ -173,15 +165,15 @@ public final class ModItems {
 
     /**
      * 净化光环可装备性：头盔位；右键自动穿戴/交换（swappable）；
-     * assetId → equipment/purification_halo.json 定义外穿模型层
-     * （贴图 textures/entity/equipment/humanoid|humanoid_baby/purification_halo.png，
+     * assetId → equipment/equipoise_halo.json 定义外穿模型层
+     * （贴图 textures/entity/equipment/humanoid|humanoid_baby/equipoise_halo.png，
      * 即 ls\14.png），穿戴后像一般头盔那样外显。声音用通用穿戴音。
      */
     private static Equippable haloEquippable() {
         return Equippable.builder(EquipmentSlot.HEAD)
                 .setEquipSound(SoundEvents.ARMOR_EQUIP_GENERIC)
                 .setAsset(ResourceKey.create(EquipmentAssets.ROOT_ID,
-                        Identifier.fromNamespaceAndPath(SizeAdjusterMod.MOD_ID, "purification_halo")))
+                        Identifier.fromNamespaceAndPath(SizeAdjusterMod.MOD_ID, "equipoise_halo")))
                 .setDispensable(true)
                 .setSwappable(true)
                 .setDamageOnHurt(true)

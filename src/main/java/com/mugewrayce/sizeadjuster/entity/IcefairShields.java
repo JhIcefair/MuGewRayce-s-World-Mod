@@ -28,7 +28,7 @@ import java.util.UUID;
  * 整体维持 3 秒（每次受击整体重置），直到 3 秒内没有再受到攻击伤害，全部消失。
  *
  * 位置跟随/倒计时/朝向由每枚魔法阵实体自身的 tick 处理
- * （见 PurificationFormationEntity.tickIcefairShield）；本类负责：
+ * （见 EquipoiseFormationEntity.tickIcefairShield）；本类负责：
  * 伤害到来时的"抵挡/生成/重置"判定、环形布阵、以及角色离开时的清理。
  */
 public final class IcefairShields {
@@ -49,7 +49,7 @@ public final class IcefairShields {
     private static final int COVER_HALF_ANGLE_DEGREES = 60;
 
     /** 玩家 UUID → 其当前的自动防御魔法阵列表。 */
-    private static final Map<UUID, List<PurificationFormationEntity>> SHIELDS = new HashMap<>();
+    private static final Map<UUID, List<EquipoiseFormationEntity>> SHIELDS = new HashMap<>();
 
     private IcefairShields() {
     }
@@ -65,6 +65,11 @@ public final class IcefairShields {
      * @return false=本次伤害被自动防御魔法阵抵挡（不生效）；true=伤害照常生效
      */
     public static boolean onAttackDamage(ServerLevel level, Player player, DamageSource source) {
+        // 统一规则 B-2：防御魔法阵不能抵挡来自魔法阵的伤害（净化群体伤害阵等），
+        // 因此 icefair 自动防御阵对这类伤害直接放行、不召唤、不抵挡。
+        if (EquipoiseFormationEntity.isFormationDamage(source)) {
+            return true;
+        }
         UUID uuid = player.getUUID();
         Entity attacker = source.getDirectEntity() != null ? source.getDirectEntity() : source.getEntity();
         if (attacker == player) {
@@ -80,18 +85,18 @@ public final class IcefairShields {
         }
         int attackYaw = yawFrom(toSource);
 
-        List<PurificationFormationEntity> shields = active(uuid);
+        List<EquipoiseFormationEntity> shields = active(uuid);
 
         if (shields.size() >= MAX_SHIELDS) {
             // 环形状态：任何方向伤害都会被魔法阵抵挡，整体维持 3 秒（受击即整体重置）
-            for (PurificationFormationEntity shield : shields) {
+            for (EquipoiseFormationEntity shield : shields) {
                 shield.refreshIcefairLife();
             }
             return false;
         }
 
         // 同方向/近方向已有魔法阵 → 由它抵挡本次伤害并重置其 3 秒倒计时
-        for (PurificationFormationEntity shield : shields) {
+        for (EquipoiseFormationEntity shield : shields) {
             if (angleDistance(shield.getShieldDirYaw(), attackYaw) <= COVER_HALF_ANGLE_DEGREES) {
                 shield.refreshIcefairLife();
                 return false;
@@ -99,7 +104,7 @@ public final class IcefairShields {
         }
 
         // 新的明显不同方向：优先执行魔法阵逻辑——召唤新的独立魔法阵并抵挡本次伤害
-        PurificationFormationEntity shield = spawnShield(level, player, attackYaw);
+        EquipoiseFormationEntity shield = spawnShield(level, player, attackYaw);
         shields.add(shield);
         if (shields.size() >= MAX_SHIELDS) {
             // 满 4 枚 → 竖着围绕在玩家周围成环（每 90° 一枚，全向防御）
@@ -109,9 +114,9 @@ public final class IcefairShields {
     }
 
     /** 在玩家朝向伤害来源的方向、距离玩家 0.25 格处生成一枚直径 0.5 格的防御魔法阵（与法杖防御阵同特性）。 */
-    private static PurificationFormationEntity spawnShield(ServerLevel level, Player player, int yaw) {
-        PurificationFormationEntity shield = new PurificationFormationEntity(
-                level, player, PurificationFormationEntity.TYPE_ICEFAIR_SHIELD);
+    private static EquipoiseFormationEntity spawnShield(ServerLevel level, Player player, int yaw) {
+        EquipoiseFormationEntity shield = new EquipoiseFormationEntity(
+                level, player, EquipoiseFormationEntity.TYPE_ICEFAIR_SHIELD);
         shield.initIcefairShield(yaw);
         shield.setSize(0.5F); // 直径 0.5 格
         shield.setPos(player.getEyePosition().add(
@@ -123,7 +128,7 @@ public final class IcefairShields {
     }
 
     /** 满 4 枚：按每 90° 均匀分配，四枚竖着围绕玩家成环（全向防御）。 */
-    private static void arrangeRing(List<PurificationFormationEntity> shields) {
+    private static void arrangeRing(List<EquipoiseFormationEntity> shields) {
         for (int i = 0; i < shields.size(); i++) {
             int yaw = i * (360 / MAX_SHIELDS);
             shields.get(i).initIcefairShield(yaw);
@@ -132,8 +137,8 @@ public final class IcefairShields {
     }
 
     /** 取玩家当前存活的自动防御魔法阵列表（惰性清理已消失的实体）。 */
-    private static List<PurificationFormationEntity> active(UUID uuid) {
-        List<PurificationFormationEntity> shields = SHIELDS.get(uuid);
+    private static List<EquipoiseFormationEntity> active(UUID uuid) {
+        List<EquipoiseFormationEntity> shields = SHIELDS.get(uuid);
         if (shields == null) {
             shields = new ArrayList<>();
             SHIELDS.put(uuid, shields);
@@ -150,9 +155,9 @@ public final class IcefairShields {
 
     /** 清理玩家的全部自动防御魔法阵（如切换角色离开 icefair 时）。 */
     public static void clearShields(UUID uuid) {
-        List<PurificationFormationEntity> shields = SHIELDS.remove(uuid);
+        List<EquipoiseFormationEntity> shields = SHIELDS.remove(uuid);
         if (shields != null) {
-            for (PurificationFormationEntity shield : shields) {
+            for (EquipoiseFormationEntity shield : shields) {
                 if (shield.isAlive()) {
                     shield.discard();
                 }
@@ -165,8 +170,8 @@ public final class IcefairShields {
      * 同方向/近方向再次受击 → 重置该阵 3 秒倒计时；
      * 环形状态 → 整体重置（任何方向的攻击都被环形魔法阵抵挡）。
      */
-    public static void onShieldBlocked(UUID ownerUuid, PurificationFormationEntity shield) {
-        List<PurificationFormationEntity> shields = SHIELDS.get(ownerUuid);
+    public static void onShieldBlocked(UUID ownerUuid, EquipoiseFormationEntity shield) {
+        List<EquipoiseFormationEntity> shields = SHIELDS.get(ownerUuid);
         if (shields == null) {
             return;
         }
@@ -177,7 +182,7 @@ public final class IcefairShields {
         }
         if (shields.size() >= MAX_SHIELDS) {
             // 环形：整体维持 3 秒（受击即整体重置）
-            for (PurificationFormationEntity s : shields) {
+            for (EquipoiseFormationEntity s : shields) {
                 s.refreshIcefairLife();
             }
         } else {
