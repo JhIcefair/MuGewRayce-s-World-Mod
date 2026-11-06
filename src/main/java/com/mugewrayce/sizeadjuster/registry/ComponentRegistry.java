@@ -7,7 +7,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 
 /**
- * 数据组件类型注册落点（W03 骨架，W06 加正式组件）。
+ * 数据组件类型注册落点（W03 骨架，W06 加正式组件，W10 加附加书等级）。
  *
  * <p>组件是 <b>common</b> 内容，只在 common initializer 注册，不能放客户端初始化；
  * 且必须排在物品之前（W07/W09 会在 {@code Item.Properties.component(...)} 里直接引用组件），
@@ -35,6 +35,9 @@ public final class ComponentRegistry {
     /** 被附加书附加过的武器。 */
     public static final Identifier ATTACHMENT_DATA_ID =
             Identifier.fromNamespaceAndPath(SizeAdjusterMod.MOD_ID, "attachment_data");
+    /** 魔法附加书自身等级（W10 新增）。 */
+    public static final Identifier ATTACHMENT_BOOK_DATA_ID =
+            Identifier.fromNamespaceAndPath(SizeAdjusterMod.MOD_ID, "attachment_book_data");
     /** 普通魔法水晶。 */
     public static final Identifier CRYSTAL_DATA_ID =
             Identifier.fromNamespaceAndPath(SizeAdjusterMod.MOD_ID, "crystal_data");
@@ -54,6 +57,8 @@ public final class ComponentRegistry {
         Registry.register(BuiltInRegistries.DATA_COMPONENT_TYPE, APPLICATION_DATA_ID, ModComponents.APPLICATION_DATA);
         Registry.register(BuiltInRegistries.DATA_COMPONENT_TYPE, STAFF_DATA_ID, ModComponents.STAFF_DATA);
         Registry.register(BuiltInRegistries.DATA_COMPONENT_TYPE, ATTACHMENT_DATA_ID, ModComponents.ATTACHMENT_DATA);
+        Registry.register(BuiltInRegistries.DATA_COMPONENT_TYPE,
+                ATTACHMENT_BOOK_DATA_ID, ModComponents.ATTACHMENT_BOOK_DATA);
         Registry.register(BuiltInRegistries.DATA_COMPONENT_TYPE, CRYSTAL_DATA_ID, ModComponents.CRYSTAL_DATA);
 
         // W03 临时测试组件（W23 清理）
