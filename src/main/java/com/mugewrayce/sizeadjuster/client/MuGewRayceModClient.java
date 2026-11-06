@@ -6,9 +6,11 @@ import com.mugewrayce.sizeadjuster.clientbridge.ScreenOpenerHolder;
 import com.mugewrayce.sizeadjuster.client.network.W04TestClient;
 import com.mugewrayce.sizeadjuster.client.gui.MagicAggregationTableScreen;
 import com.mugewrayce.sizeadjuster.client.gui.MagicAttachmentTableScreen;
+import com.mugewrayce.sizeadjuster.client.gui.MagicStudyLecternScreen;
 import com.mugewrayce.sizeadjuster.container.BaishanBagMenu;
 import com.mugewrayce.sizeadjuster.container.MagicAggregationTableMenu;
 import com.mugewrayce.sizeadjuster.container.MagicAttachmentTableMenu;
+import com.mugewrayce.sizeadjuster.container.MagicStudyLecternMenu;
 import com.mugewrayce.sizeadjuster.entity.ModEntities;
 import com.mugewrayce.sizeadjuster.payload.RoleStatusPayload;
 import com.mugewrayce.sizeadjuster.payload.SizeStatusPayload;
@@ -122,6 +124,11 @@ public class MuGewRayceModClient implements ClientModInitializer {
                 (MenuScreens.ScreenConstructor<MagicAttachmentTableMenu, MagicAttachmentTableScreen>)
                         (menu, inventory, title) -> new MagicAttachmentTableScreen(menu, inventory, title));
 
+        // W11：魔法学习讲台 GUI
+        MenuScreens.register(MagicStudyLecternMenu.TYPE,
+                (MenuScreens.ScreenConstructor<MagicStudyLecternMenu, MagicStudyLecternScreen>)
+                        (menu, inventory, title) -> new MagicStudyLecternScreen(menu, inventory, title));
+
         // 预注册 GUI 贴图：客户端完全启动后同步加载
         // （注意：onInitializeClient 在 Minecraft.<init> 期间执行，getTextureManager() 尚为 null）
         ClientLifecycleEvents.CLIENT_STARTED.register(client -> {
@@ -134,6 +141,16 @@ public class MuGewRayceModClient implements ClientModInitializer {
             registerGuiTexture(client, MagicAttachmentTableScreen.BACKGROUND);
             registerGuiTexture(client, MagicAttachmentTableScreen.BUTTON_NORMAL);
             registerGuiTexture(client, MagicAttachmentTableScreen.BUTTON_PRESSED);
+            registerGuiTexture(client, MagicStudyLecternScreen.BACKGROUND);
+            registerGuiTexture(client, MagicStudyLecternScreen.BIG_NORMAL);
+            registerGuiTexture(client, MagicStudyLecternScreen.BIG_PRESSED);
+            registerGuiTexture(client, MagicStudyLecternScreen.BIG_DISABLED);
+            registerGuiTexture(client, MagicStudyLecternScreen.MID_NORMAL);
+            registerGuiTexture(client, MagicStudyLecternScreen.MID_PRESSED);
+            registerGuiTexture(client, MagicStudyLecternScreen.MID_DISABLED);
+            registerGuiTexture(client, MagicStudyLecternScreen.SMALL_NORMAL);
+            registerGuiTexture(client, MagicStudyLecternScreen.SMALL_PRESSED);
+            registerGuiTexture(client, MagicStudyLecternScreen.SMALL_DISABLED);
         });
     }
 
