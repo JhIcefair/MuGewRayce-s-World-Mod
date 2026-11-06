@@ -88,6 +88,10 @@ public class MuGewRayceModClient implements ClientModInitializer {
         EntityRendererRegistry.register(ModEntities.EQUIPOISE_CIRCLE, EquipoiseCircleRenderer::new);
         EntityRendererRegistry.register(ModEntities.EQUIPOISE_FORMATION, EquipoiseFormationRenderer::new);
 
+        // 两种魔法体共用玩家模型渲染器（贴图 ls\19.png）
+        EntityRendererRegistry.register(ModEntities.LIFELESS_MAGIC_BODY, MagicBodyRenderer::new);
+        EntityRendererRegistry.register(ModEntities.TRIAL_MAGIC_BODY, MagicBodyRenderer::new);
+
         // 柃之册尺寸 GUI：接收服务端回发的当前属性状态（更新已打开的尺寸 GUI 左侧面板）
         ClientPlayNetworking.registerGlobalReceiver(SizeStatusPayload.TYPE, (payload, context) ->
                 context.client().execute(() -> {

@@ -1,0 +1,6 @@
+{
+    "textures":  {
+                     "layer0":  "mugewrayce-mod:item/beginner_magic_exam_application"
+                 },
+    "parent":  "minecraft:item/generated"
+}

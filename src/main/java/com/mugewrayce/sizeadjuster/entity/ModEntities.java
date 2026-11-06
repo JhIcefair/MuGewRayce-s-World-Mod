@@ -17,12 +17,17 @@ import net.minecraft.world.entity.MobCategory;
  *   尺寸 2.0x0.1（贴图 256x256 地面方形）。
  * - equipoise_formation（净化魔法阵·法杖施法）：单体/群体/防御五类阵法
  *   （类型见 EquipoiseFormationEntity）；尺寸随类型（单2 / 群6 / 防御按身高）。
+ * - lifeless_magic_body（没有生命的魔法体）：敌对生物，玩家模型；
+ *   生成/战斗数值留 W13/W14，本任务只做内容层与接缝。
+ * - trial_magic_body（试炼魔法体）：考试/试炼配置变体，无 AI/无敌，具体配置 W15。
  */
 public final class ModEntities {
 
     public static EntityType<EquipoiseOrbEntity> EQUIPOISE_ORB;
     public static EntityType<EquipoiseCircleEntity> EQUIPOISE_CIRCLE;
     public static EntityType<EquipoiseFormationEntity> EQUIPOISE_FORMATION;
+    public static EntityType<LifelessMagicBodyEntity> LIFELESS_MAGIC_BODY;
+    public static EntityType<TrialMagicBodyEntity> TRIAL_MAGIC_BODY;
 
     private ModEntities() {
     }
@@ -57,6 +62,25 @@ public final class ModEntities {
                         .clientTrackingRange(8)
                         .updateInterval(1)
                         .build(key("equipoise_formation")));
+
+        LIFELESS_MAGIC_BODY = Registry.register(BuiltInRegistries.ENTITY_TYPE,
+                key("lifeless_magic_body"),
+                EntityType.Builder.<LifelessMagicBodyEntity>of(
+                        (type, level) -> new LifelessMagicBodyEntity(type, level), MobCategory.MONSTER)
+                        .sized(0.6F, 1.8F)
+                        .clientTrackingRange(10)
+                        .updateInterval(2)
+                        .build(key("lifeless_magic_body")));
+
+        TRIAL_MAGIC_BODY = Registry.register(BuiltInRegistries.ENTITY_TYPE,
+                key("trial_magic_body"),
+                EntityType.Builder.<TrialMagicBodyEntity>of(
+                        (type, level) -> new TrialMagicBodyEntity(type, level), MobCategory.MONSTER)
+                        .sized(0.6F, 1.8F)
+                        .noSave()
+                        .clientTrackingRange(10)
+                        .updateInterval(2)
+                        .build(key("trial_magic_body")));
     }
 
     private static ResourceKey<EntityType<?>> key(String id) {

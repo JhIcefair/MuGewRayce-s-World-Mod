@@ -1,0 +1,6 @@
+{
+    "textures":  {
+                     "layer0":  "mugewrayce-mod:item/magic_book"
+                 },
+    "parent":  "minecraft:item/generated"
+}

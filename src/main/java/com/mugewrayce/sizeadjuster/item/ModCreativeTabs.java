@@ -1,6 +1,7 @@
 package com.mugewrayce.sizeadjuster.item;
 
 import com.mugewrayce.sizeadjuster.SizeAdjusterMod;
+import com.mugewrayce.sizeadjuster.registry.BlockRegistry;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
@@ -41,6 +42,25 @@ public final class ModCreativeTabs {
                     output.accept(ModItems.baishanBag);
                     output.accept(ModItems.equipoiseHalo);
                     output.accept(ModItems.lifeConversionToken);
+
+                    // W08 魔法体系 12 件（顺序按接口约定 §1.2）
+                    output.accept(MagicItems.manaDetector);
+                    output.accept(MagicItems.magicStaff);
+                    output.accept(MagicItems.magicCrystal);
+                    output.accept(MagicItems.eternalCrystal);
+                    output.accept(MagicItems.magicStudyCertificate);
+                    output.accept(MagicItems.magicBook);
+                    output.accept(MagicItems.beginnerExamApplication);
+                    output.accept(MagicItems.proficiencyCertificate);
+                    output.accept(MagicItems.trialApplication);
+                    output.accept(MagicItems.promotionCertificate);
+                    output.accept(MagicItems.attachmentBook);
+                    output.accept(MagicItems.lifeMigrationStone);
+
+                    // W08 的三个方块物品
+                    output.accept(BlockRegistry.MAGIC_STUDY_LECTERN_ITEM);
+                    output.accept(BlockRegistry.MAGIC_ATTACHMENT_TABLE_ITEM);
+                    output.accept(BlockRegistry.MAGIC_AGGREGATION_TABLE_ITEM);
                 })
                 .build();
 
