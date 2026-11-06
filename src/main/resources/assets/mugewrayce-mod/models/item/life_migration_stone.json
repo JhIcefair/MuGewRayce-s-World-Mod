@@ -1,0 +1,6 @@
+{
+    "textures":  {
+                     "layer0":  "mugewrayce-mod:item/life_migration_stone"
+                 },
+    "parent":  "minecraft:item/generated"
+}

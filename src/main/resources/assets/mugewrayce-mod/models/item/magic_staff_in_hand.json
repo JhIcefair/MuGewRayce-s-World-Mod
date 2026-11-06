@@ -1,0 +1,4 @@
+{
+  "parent": "minecraft:item/spear_in_hand",
+  "textures": { "layer0": "mugewrayce-mod:item/magic_staff" }
+}

@@ -1,0 +1,6 @@
+{
+    "textures":  {
+                     "layer0":  "mugewrayce-mod:item/magic_proficiency_certificate"
+                 },
+    "parent":  "minecraft:item/generated"
+}

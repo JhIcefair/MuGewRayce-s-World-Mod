@@ -50,6 +50,10 @@ public abstract class AbstractStraightProjectile extends Projectile {
         if (super.canHitEntity(target)) {
             return true;
         }
+        // 魔法体（生物）对普通投射物 canBeHitByProjectile=false；本模组魔法球属于魔法伤害投射物，必须仍能命中。
+        if (target instanceof AbstractMagicBodyEntity magicBody) {
+            return target != this.getOwner() && magicBody.isAlive() && !magicBody.isSpectator();
+        }
         return target instanceof Player player
                 && !player.level().isClientSide()
                 && target != this.getOwner()

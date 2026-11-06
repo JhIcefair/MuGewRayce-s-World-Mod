@@ -3,11 +3,16 @@ package com.mugewrayce.sizeadjuster.registry;
 import com.mugewrayce.sizeadjuster.item.ModItems;
 
 /**
- * 模组注册总入口（W01-B 骨架，W03 起加入组件）。
+ * 模组注册总入口。
  *
- * <p>注册顺序：<b>数据组件</b> → 现有物品 → 新物品 → 实体 → 方块 → 创造分类。
- * 组件必须最先注册：W07/W09 的物品属性会直接引用组件类型；
- * 创造分类最后注册，其 displayItems 会引用前面已赋值的物品字段。
+ * <p>注册顺序（W08 起）：<b>数据组件 → ModItems（1.x 物品）→ 方块/BlockItem/BlockEntityType
+ * → ItemRegistry（12 件魔法物品）→ 实体 → 创造分类</b>。</p>
+ *
+ * <ul>
+ *   <li>组件必须最先注册：物品属性会直接引用组件类型；</li>
+ *   <li>BlockItem 必须晚于对应方块；BlockEntityType 也必须晚于方块；</li>
+ *   <li>创造分类最后注册，其 displayItems 会引用前面已赋值的物品字段。</li>
+ * </ul>
  */
 public final class ModRegistry {
 
@@ -17,9 +22,9 @@ public final class ModRegistry {
     public static void register() {
         ComponentRegistry.register();
         ModItems.register();
+        BlockRegistry.register();
         ItemRegistry.register();
         EntityRegistry.register();
-        BlockRegistry.register();
         CreativeTabRegistry.register();
     }
 }

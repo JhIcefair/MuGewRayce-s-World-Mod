@@ -30,7 +30,7 @@ import java.util.Set;
  *
  * <p>W06 起不再占位：组件存在<b>且内部字段合法</b>才算有效（如 {@code cert.no=0}、
  * {@code targetLevel} 越界仍算无效）；法杖 / 水晶 / 附加书不属于证书类，不在此集合。
- * 正式物品要到 W09 才注册，真实物品上的无效提示留 W09 / W15 运行验收。</p>
+ * 正式物品已在 W08 注册；真实物品上的无效提示留 W11 / W15 运行验收。</p>
  */
 public final class InvalidItemRules {
 

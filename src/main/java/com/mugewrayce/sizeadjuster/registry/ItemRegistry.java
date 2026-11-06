@@ -1,6 +1,7 @@
 package com.mugewrayce.sizeadjuster.registry;
 
 import com.mugewrayce.sizeadjuster.SizeAdjusterMod;
+import com.mugewrayce.sizeadjuster.item.MagicItems;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
@@ -21,7 +22,8 @@ public final class ItemRegistry {
     }
 
     public static void register() {
-        // W02 起在此注册 2.0.0 物品；W01 不注册任何物品。
+        // W08 起 12 件魔法体系非方块物品统一委托 MagicItems。
+        MagicItems.register();
     }
 
     /**

@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "A": "minecraft:book",
+    "B": "#minecraft:logs",
+    "Y": "minecraft:diamond"
+  },
+  "pattern": [
+    "# A #",
+    "# B #",
+    "Y Y Y"
+  ],
+  "result": { "id": "mugewrayce-mod:magic_study_lectern" }
+}

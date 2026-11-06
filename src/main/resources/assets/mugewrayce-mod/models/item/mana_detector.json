@@ -1,0 +1,6 @@
+{
+    "textures":  {
+                     "layer0":  "mugewrayce-mod:item/mana_detector"
+                 },
+    "parent":  "minecraft:item/generated"
+}
