@@ -42,7 +42,7 @@ public final class MagicItems {
     /** 魔法试炼晋级认证；默认无 {@code promotion_data}，讲台消耗/升级 W11。 */
     public static Item promotionCertificate;
 
-    /** 魔法附加书；本身不写 {@code attachment_data}，倍率写在武器上（W10/W14）。 */
+    /** 魔法附加书；自身带 I/II/III 等级（W10），倍率写在武器上（W14）。 */
     public static Item attachmentBook;
 
     /** 生命迁移石；角色转换 GUI W12。 */
@@ -64,7 +64,7 @@ public final class MagicItems {
         proficiencyCertificate = ItemRegistry.register("magic_proficiency_certificate", Item::new);
         trialApplication = ItemRegistry.register("magic_trial_application", Item::new);
         promotionCertificate = ItemRegistry.register("magic_trial_promotion_certificate", Item::new);
-        attachmentBook = ItemRegistry.register("magic_attachment_book", Item::new);
+        attachmentBook = ItemRegistry.register("magic_attachment_book", AttachmentBookItem::new);
         lifeMigrationStone = ItemRegistry.register("life_migration_stone", Item::new);
     }
 }

@@ -34,6 +34,8 @@ public class TriStateButton extends AbstractWidget {
     private boolean toggleMode;
     private Runnable onPress = () -> {
     };
+    private Runnable onRelease = () -> {
+    };
     private Component disabledReason;
     private int textColor = 0xFFFFFFFF;
 
@@ -71,6 +73,17 @@ public class TriStateButton extends AbstractWidget {
 
     public void setOnPress(Runnable onPress) {
         this.onPress = onPress;
+    }
+
+    /**
+     * 点按式按钮的“松开执行”回调。
+     *
+     * <p>§10.3 / §10.4 要求按下只换贴图、松开才执行；不能在 {@link #setOnPress}
+     * 里直接执行。回调只在“确实在按钮内按下过”且仍可选时触发，
+     * 避免界面把全局 mouseReleased 传给控件时误触发。</p>
+     */
+    public void setOnRelease(Runnable onRelease) {
+        this.onRelease = onRelease;
     }
 
     /** 设为不可选：换不可选贴图、禁用点击、悬停显示原因。 */
@@ -152,7 +165,11 @@ public class TriStateButton extends AbstractWidget {
 
     @Override
     public void onRelease(MouseButtonEvent event) {
+        boolean wasDown = this.mouseDown;
         this.mouseDown = false;
+        if (wasDown && this.active) {
+            this.onRelease.run();
+        }
     }
 
     @Override

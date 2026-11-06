@@ -13,8 +13,9 @@ import net.minecraft.core.component.DataComponentType;
  *
  * <p>正式组件 ID 见接口约定 §2：{@code cert_data} / {@code proficiency_data} /
  * {@code promotion_data} / {@code application_data} / {@code staff_data} /
- * {@code attachment_data} / {@code crystal_data}。W03 的 {@code w03_test_data}
- * 保留到 W23 统一清理。</p>
+ * {@code attachment_data} / {@code attachment_book_data} / {@code crystal_data}。
+ * W10 新增 {@code attachment_book_data}（第八类，附加书自身等级）。
+ * W03 的 {@code w03_test_data} 保留到 W23 统一清理。</p>
  */
 public final class ModComponents {
 
@@ -58,6 +59,13 @@ public final class ModComponents {
             DataComponentType.<AttachmentData>builder()
                     .persistent(AttachmentData.CODEC)
                     .networkSynchronized(AttachmentData.STREAM_CODEC)
+                    .build();
+
+    /** 魔法附加书自身等级（{@link AttachmentBookData}，W10 新增）。 */
+    public static final DataComponentType<AttachmentBookData> ATTACHMENT_BOOK_DATA =
+            DataComponentType.<AttachmentBookData>builder()
+                    .persistent(AttachmentBookData.CODEC)
+                    .networkSynchronized(AttachmentBookData.STREAM_CODEC)
                     .build();
 
     /** 普通魔法水晶（{@link CrystalData}）。 */

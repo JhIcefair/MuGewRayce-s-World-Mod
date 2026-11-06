@@ -54,7 +54,10 @@ public final class ModCreativeTabs {
                     output.accept(MagicItems.proficiencyCertificate);
                     output.accept(MagicItems.trialApplication);
                     output.accept(MagicItems.promotionCertificate);
-                    output.accept(MagicItems.attachmentBook);
+                    // W10：附加书 I/II/III 各占一格
+                    output.accept(AttachmentBookItem.createStack(MagicItems.attachmentBook, 1));
+                    output.accept(AttachmentBookItem.createStack(MagicItems.attachmentBook, 2));
+                    output.accept(AttachmentBookItem.createStack(MagicItems.attachmentBook, 3));
                     output.accept(MagicItems.lifeMigrationStone);
 
                     // W08 的三个方块物品
