@@ -23,7 +23,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraft.client.renderer.texture.SimpleTexture;
 import net.minecraft.resources.Identifier;
-import net.minecraft.world.inventory.ChestMenu;
 import org.lwjgl.glfw.GLFW;
 
 /**
@@ -106,7 +105,7 @@ public class MuGewRayceModClient implements ClientModInitializer {
 
         // 百杉包 GUI（依赖 fabric-menu-api-v1 的 classtweaker 使 register/ScreenConstructor 公开）
         MenuScreens.register(BaishanBagMenu.TYPE,
-                (MenuScreens.ScreenConstructor<ChestMenu, BagScreen>) (menu, inventory, title) ->
+                (MenuScreens.ScreenConstructor<BaishanBagMenu, BagScreen>) (menu, inventory, title) ->
                         new BagScreen(menu, inventory, title));
 
         // 预注册百杉包 GUI 贴图：客户端完全启动后同步加载
