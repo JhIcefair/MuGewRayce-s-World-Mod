@@ -75,6 +75,20 @@ public final class ModComponents {
                     .networkSynchronized(CrystalData.STREAM_CODEC)
                     .build();
 
+    /** 普通魔法杖当前选择（{@link StaffSelectionData}，W12 新增）。 */
+    public static final DataComponentType<StaffSelectionData> STAFF_SELECTION_DATA =
+            DataComponentType.<StaffSelectionData>builder()
+                    .persistent(StaffSelectionData.CODEC)
+                    .networkSynchronized(StaffSelectionData.STREAM_CODEC)
+                    .build();
+
+    /** 魔法书设置（{@link MagicBookData}，W12 新增）。 */
+    public static final DataComponentType<MagicBookData> MAGIC_BOOK_DATA =
+            DataComponentType.<MagicBookData>builder()
+                    .persistent(MagicBookData.CODEC)
+                    .networkSynchronized(MagicBookData.STREAM_CODEC)
+                    .build();
+
     /** W03 临时测试组件（接口约定 §2.2，W23 清理）。 */
     public static final DataComponentType<W03TestData> W03_TEST_DATA =
             DataComponentType.<W03TestData>builder()

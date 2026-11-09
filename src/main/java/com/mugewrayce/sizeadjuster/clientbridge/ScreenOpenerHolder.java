@@ -16,6 +16,22 @@ public final class ScreenOpenerHolder {
         @Override
         public void openRoleSwitch() {
         }
+
+        @Override
+        public void openEquipoiseStaffSettings() {
+        }
+
+        @Override
+        public void openMagicStaffSettings() {
+        }
+
+        @Override
+        public void openCrystalSettings() {
+        }
+
+        @Override
+        public void openMagicBook() {
+        }
     };
 
     private static volatile ScreenOpener opener = NOOP;
@@ -34,5 +50,21 @@ public final class ScreenOpenerHolder {
 
     public static void openRoleSwitch() {
         opener.openRoleSwitch();
+    }
+
+    public static void openEquipoiseStaffSettings() {
+        opener.openEquipoiseStaffSettings();
+    }
+
+    public static void openMagicStaffSettings() {
+        opener.openMagicStaffSettings();
+    }
+
+    public static void openCrystalSettings() {
+        opener.openCrystalSettings();
+    }
+
+    public static void openMagicBook() {
+        opener.openMagicBook();
     }
 }

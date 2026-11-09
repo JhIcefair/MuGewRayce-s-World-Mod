@@ -41,6 +41,12 @@ public final class ComponentRegistry {
     /** 普通魔法水晶。 */
     public static final Identifier CRYSTAL_DATA_ID =
             Identifier.fromNamespaceAndPath(SizeAdjusterMod.MOD_ID, "crystal_data");
+    /** 普通魔法杖当前选择（W12 新增）。 */
+    public static final Identifier STAFF_SELECTION_DATA_ID =
+            Identifier.fromNamespaceAndPath(SizeAdjusterMod.MOD_ID, "staff_selection_data");
+    /** 魔法书设置（W12 新增）。 */
+    public static final Identifier MAGIC_BOOK_DATA_ID =
+            Identifier.fromNamespaceAndPath(SizeAdjusterMod.MOD_ID, "magic_book_data");
 
     /** W03 临时测试组件 ID（接口约定 §2.2，W23 清理）。 */
     public static final Identifier W03_TEST_DATA_ID =
@@ -60,6 +66,10 @@ public final class ComponentRegistry {
         Registry.register(BuiltInRegistries.DATA_COMPONENT_TYPE,
                 ATTACHMENT_BOOK_DATA_ID, ModComponents.ATTACHMENT_BOOK_DATA);
         Registry.register(BuiltInRegistries.DATA_COMPONENT_TYPE, CRYSTAL_DATA_ID, ModComponents.CRYSTAL_DATA);
+        Registry.register(BuiltInRegistries.DATA_COMPONENT_TYPE,
+                STAFF_SELECTION_DATA_ID, ModComponents.STAFF_SELECTION_DATA);
+        Registry.register(BuiltInRegistries.DATA_COMPONENT_TYPE,
+                MAGIC_BOOK_DATA_ID, ModComponents.MAGIC_BOOK_DATA);
 
         // W03 临时测试组件（W23 清理）
         Registry.register(BuiltInRegistries.DATA_COMPONENT_TYPE,

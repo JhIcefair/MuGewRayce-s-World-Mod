@@ -6,6 +6,9 @@ import com.mugewrayce.sizeadjuster.entity.IcefairShields;
 import com.mugewrayce.sizeadjuster.entity.EquipoiseFormationEntity;
 import com.mugewrayce.sizeadjuster.item.EquipoiseStaffItem;
 import com.mugewrayce.sizeadjuster.network.ModNetwork;
+import com.mugewrayce.sizeadjuster.payload.CrystalSettingsPayload;
+import com.mugewrayce.sizeadjuster.payload.MagicBookSettingsPayload;
+import com.mugewrayce.sizeadjuster.payload.MagicStaffSelectionPayload;
 import com.mugewrayce.sizeadjuster.payload.RoleActionPayload;
 import com.mugewrayce.sizeadjuster.payload.RoleStatusPayload;
 import com.mugewrayce.sizeadjuster.payload.SizeActionPayload;
@@ -42,6 +45,9 @@ public class SizeAdjusterMod implements ModInitializer {
         SizeActionPayload.register();
         SizeStatusPayload.register();
         StaffModePayload.register();
+        MagicStaffSelectionPayload.register();
+        CrystalSettingsPayload.register();
+        MagicBookSettingsPayload.register();
         RoleActionPayload.register();
         RoleStatusPayload.register();
 
