@@ -442,6 +442,27 @@ public final class LecternRules {
         return new ApplyResult(true, HINT_NONE, false, target);
     }
 
+    /**
+     * 高级讲台学新条目（W17）：不查前置、不读②格证明、不消耗。
+     *
+     * <p>新条目等级 = {@code selectedLevel > 初学者 ? selectedLevel : 初学者}；
+     * 同一条目已存在 → {@link #HINT_ALREADY_LEARNED}（交给升级分支 {@link #forceLevel}）。</p>
+     */
+    public static LearnResult canLearnAdvanced(CertData cert, MagicType type, CastMode mode,
+                                               CastSubMode sub, int selectedLevel) {
+        if (cert == null || type == null || mode == null) {
+            return LearnResult.fail(HINT_NO_TYPE);
+        }
+        String subId = sub == null ? "" : sub.id();
+        if (MagicDataRules.findEntry(cert, type.id(), mode.id(), subId).isPresent()) {
+            return LearnResult.fail(HINT_ALREADY_LEARNED);
+        }
+        int newLevel = selectedLevel > LEVEL_BEGINNER
+                ? clampLevel(selectedLevel) : LEVEL_BEGINNER;
+        CertEntry newEntry = new CertEntry(type.id(), mode.id(), subId, newLevel);
+        return LearnResult.ok(newEntry, null, false);
+    }
+
     // ------------------------------------------------------------------
     // 学新内容 / 学新模式（含证明模拟）
     // ------------------------------------------------------------------
