@@ -6,6 +6,7 @@ import com.mugewrayce.sizeadjuster.item.EquipoiseCrystalItem;
 import com.mugewrayce.sizeadjuster.item.EquipoiseStaffItem;
 import com.mugewrayce.sizeadjuster.item.StaffCastModes;
 import com.mugewrayce.sizeadjuster.magic.mana.ManaDetectorRequests;
+import com.mugewrayce.sizeadjuster.magic.mana.ManaService;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.minecraft.server.level.ServerPlayer;
 
@@ -49,5 +50,6 @@ public final class PlayerStateCleanup {
         EquipoiseFormationEntity.deactivateDefense(id); // 手动防御阵（若仍在生效）
         StaffCastModes.clear(id);                         // 施法模式
         ManaDetectorRequests.clear(id);                   // 探测器待回包请求（W12）
+        ManaService.clearPlayer(id);                      // 施法轮流步数 + 区块不足锁定（W13）
     }
 }

@@ -6,6 +6,9 @@ import com.mugewrayce.sizeadjuster.entity.IcefairShields;
 import com.mugewrayce.sizeadjuster.entity.EquipoiseFormationEntity;
 import com.mugewrayce.sizeadjuster.item.EquipoiseStaffItem;
 import com.mugewrayce.sizeadjuster.magic.mana.ManaDetectorRequests;
+import com.mugewrayce.sizeadjuster.magic.mana.ManaLock;
+import com.mugewrayce.sizeadjuster.magic.mana.ManaStorage;
+import com.mugewrayce.sizeadjuster.magic.mana.ManaTicker;
 import com.mugewrayce.sizeadjuster.network.ModNetwork;
 import com.mugewrayce.sizeadjuster.payload.CrystalSettingsPayload;
 import com.mugewrayce.sizeadjuster.payload.LifeMigrationPayload;
@@ -124,10 +127,18 @@ public class SizeAdjusterMod implements ModInitializer {
         // 角色持久化：服务器启动（进入/重进世界）载入，停止时再写入，保证退出重进仍保留
         ServerLifecycleEvents.SERVER_STARTED.register(RoleStore::load);
         ServerLifecycleEvents.SERVER_STOPPING.register(RoleStore::save);
-        ServerLifecycleEvents.SERVER_STOPPED.register(server -> ManaDetectorRequests.clearAll());
+        ServerLifecycleEvents.SERVER_STOPPED.register(server -> {
+            ManaDetectorRequests.clearAll();
+            ManaLock.clearAll();
+            ManaTicker.reset();
+        });
 
         // 学习证编号计数器（W06）：服务器启动时载入，发号时先原子落盘
         ServerLifecycleEvents.SERVER_STARTED.register(CertCounter::load);
+
+        // 区块魔力（W13）：每秒结算（自然恢复 + 指定迁移）；不持久化，启动即回到最大值
+        ManaTicker.register();
+        ServerLifecycleEvents.SERVER_STARTED.register(server -> ManaStorage.resetAll());
 
         LOGGER.info("mugewrayce mod initialized.");
     }
