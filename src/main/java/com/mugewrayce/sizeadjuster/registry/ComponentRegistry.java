@@ -48,10 +48,6 @@ public final class ComponentRegistry {
     public static final Identifier MAGIC_BOOK_DATA_ID =
             Identifier.fromNamespaceAndPath(SizeAdjusterMod.MOD_ID, "magic_book_data");
 
-    /** W03 临时测试组件 ID（接口约定 §2.2，W23 清理）。 */
-    public static final Identifier W03_TEST_DATA_ID =
-            Identifier.fromNamespaceAndPath(SizeAdjusterMod.MOD_ID, "w03_test_data");
-
     private ComponentRegistry() {
     }
 
@@ -70,9 +66,5 @@ public final class ComponentRegistry {
                 STAFF_SELECTION_DATA_ID, ModComponents.STAFF_SELECTION_DATA);
         Registry.register(BuiltInRegistries.DATA_COMPONENT_TYPE,
                 MAGIC_BOOK_DATA_ID, ModComponents.MAGIC_BOOK_DATA);
-
-        // W03 临时测试组件（W23 清理）
-        Registry.register(BuiltInRegistries.DATA_COMPONENT_TYPE,
-                W03_TEST_DATA_ID, ModComponents.W03_TEST_DATA);
     }
 }

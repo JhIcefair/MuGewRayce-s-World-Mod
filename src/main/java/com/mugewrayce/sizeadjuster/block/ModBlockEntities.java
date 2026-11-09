@@ -20,6 +20,7 @@ public final class ModBlockEntities {
     public static BlockEntityType<MagicStudyLecternBlockEntity> MAGIC_STUDY_LECTERN;
     public static BlockEntityType<MagicAttachmentTableBlockEntity> MAGIC_ATTACHMENT_TABLE;
     public static BlockEntityType<MagicAggregationTableBlockEntity> MAGIC_AGGREGATION_TABLE;
+    public static BlockEntityType<AdvancedMagicStudyLecternBlockEntity> ADVANCED_MAGIC_STUDY_LECTERN;
 
     private ModBlockEntities() {
     }
@@ -42,6 +43,13 @@ public final class ModBlockEntities {
                 key("magic_aggregation_table"),
                 FabricBlockEntityTypeBuilder.create(
                         MagicAggregationTableBlockEntity::new, BlockRegistry.MAGIC_AGGREGATION_TABLE).build());
+
+        ADVANCED_MAGIC_STUDY_LECTERN = Registry.register(
+                BuiltInRegistries.BLOCK_ENTITY_TYPE,
+                key("advanced_magic_study_lectern"),
+                FabricBlockEntityTypeBuilder.create(
+                        AdvancedMagicStudyLecternBlockEntity::new,
+                        BlockRegistry.ADVANCED_MAGIC_STUDY_LECTERN).build());
     }
 
     private static ResourceKey<BlockEntityType<?>> key(String id) {

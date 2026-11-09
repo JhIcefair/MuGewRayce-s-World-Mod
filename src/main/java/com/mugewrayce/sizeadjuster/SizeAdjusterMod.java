@@ -14,7 +14,6 @@ import com.mugewrayce.sizeadjuster.magic.mana.ManaDetectorRequests;
 import com.mugewrayce.sizeadjuster.magic.mana.ManaLock;
 import com.mugewrayce.sizeadjuster.magic.mana.ManaStorage;
 import com.mugewrayce.sizeadjuster.magic.mana.ManaTicker;
-import com.mugewrayce.sizeadjuster.network.ModNetwork;
 import com.mugewrayce.sizeadjuster.payload.CrystalSettingsPayload;
 import com.mugewrayce.sizeadjuster.payload.LifeMigrationPayload;
 import com.mugewrayce.sizeadjuster.payload.MagicBookCastPayload;
@@ -53,8 +52,6 @@ public class SizeAdjusterMod implements ModInitializer {
 
         ModRegistry.register();
         MagicParticles.register();
-        // 2.0.0 网络骨架：C2S 意图 / S2C 状态（W04，临时测试包）
-        ModNetwork.register();
         EquipoiseSwitchPayload.register();
         EquipoiseStaffItem.registerEvents();
         SizeActionPayload.register();

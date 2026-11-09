@@ -12,6 +12,7 @@ import com.mugewrayce.sizeadjuster.magic.CastMode;
 import com.mugewrayce.sizeadjuster.magic.CastSubMode;
 import com.mugewrayce.sizeadjuster.magic.MagicDataRules;
 import com.mugewrayce.sizeadjuster.magic.MagicType;
+import com.mugewrayce.sizeadjuster.magic.SoundFx;
 import com.mugewrayce.sizeadjuster.payload.ExamHudPayload;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
@@ -28,6 +29,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.entity.Display;
 import net.minecraft.world.entity.Entity;
@@ -226,6 +228,7 @@ public final class ExamManager {
         sendChatStart(player, active);
         sendHud(level.getServer(), active, ExamHudPayload.STATE_RUNNING);
         save(level.getServer());
+        SoundFx.at(player, SoundEvents.ENCHANTMENT_TABLE_USE, 0.8F, 1.0F);
         return true;
     }
 
@@ -608,6 +611,8 @@ public final class ExamManager {
                 case FAILED -> Component.translatable("message.mugewrayce-mod.exam_failed");
             };
             owner.sendSystemMessage(message);
+            SoundFx.at(owner, passed ? SoundEvents.PLAYER_LEVELUP : SoundEvents.GLASS_BREAK,
+                    0.6F, passed ? 1.2F : 0.8F);
         }
         if (passed || result == Result.FAILED) {
             sendHud(server, active, passed ? ExamHudPayload.STATE_PASSED : ExamHudPayload.STATE_FAILED);

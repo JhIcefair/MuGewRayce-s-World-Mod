@@ -3,17 +3,13 @@ package com.mugewrayce.sizeadjuster.client.gui;
 import com.mugewrayce.sizeadjuster.component.CertData;
 import com.mugewrayce.sizeadjuster.component.CertEntry;
 import com.mugewrayce.sizeadjuster.component.ModComponents;
-import com.mugewrayce.sizeadjuster.magic.CastMode;
-import com.mugewrayce.sizeadjuster.magic.CastSubMode;
+import com.mugewrayce.sizeadjuster.magic.CertLines;
 import com.mugewrayce.sizeadjuster.magic.MagicDataRules;
-import com.mugewrayce.sizeadjuster.magic.MagicLevel;
-import com.mugewrayce.sizeadjuster.magic.MagicSkill;
-import com.mugewrayce.sizeadjuster.magic.MagicType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.Locale;
@@ -52,6 +48,12 @@ public class StudyCertScreen extends Screen {
         ItemStack stack = minecraft.player.getMainHandItem();
         this.cert = stack.get(ModComponents.CERT_DATA);
         this.valid = this.cert != null && MagicDataRules.isValidCert(this.cert);
+
+        this.addRenderableWidget(Button.builder(
+                        Component.translatable("gui.mugewrayce-mod.common.close"),
+                        b -> this.onClose())
+                .bounds(this.width - 84, this.height - 30, 72, 20)
+                .build());
     }
 
     @Override
@@ -78,51 +80,8 @@ public class StudyCertScreen extends Screen {
         int startY = this.height / 2 - 42;
         for (int i = 0; i < this.cert.entries().size(); i++) {
             CertEntry entry = this.cert.entries().get(i);
-            graphics.centeredText(this.font, describe(entry),
+            graphics.centeredText(this.font, CertLines.describe(entry),
                     cx, startY + i * 16, 0xFFFFFFFF);
         }
-    }
-
-    /** 一条学习记录：类型 · 模式 [· 具体项] [等级]；技能不显示等级。 */
-    private static Component describe(CertEntry entry) {
-        MutableComponent line = Component.empty();
-
-        MagicType type = MagicType.fromId(entry.type());
-        line.append(type == null
-                ? Component.literal(entry.type())
-                : Component.translatable(type.langKey()));
-
-        CastMode mode = CastMode.fromId(entry.mode());
-        line.append(" · ");
-        line.append(mode == null
-                ? Component.literal(entry.mode())
-                : Component.translatable(mode.langKey()));
-
-        if (mode == CastMode.SKILL) {
-            MagicSkill skill = MagicSkill.fromId(entry.sub());
-            line.append(" · ");
-            if (skill == null || skill.langKey() == null) {
-                line.append(Component.literal(entry.sub()));
-            } else {
-                line.append(Component.translatable(skill.langKey()));
-            }
-        } else if (mode != CastMode.POINT && entry.sub() != null && !entry.sub().isEmpty()) {
-            CastSubMode sub = CastSubMode.fromId(entry.sub());
-            line.append(" · ");
-            line.append(sub == null
-                    ? Component.literal(entry.sub())
-                    : Component.translatable(sub.langKey()));
-        }
-
-        if (!MagicDataRules.isSkill(entry)) {
-            MagicLevel level = MagicLevel.fromNumericLevel(entry.level());
-            if (level != null) {
-                line.append("  ");
-                line.append(level.isBeginner()
-                        ? Component.translatable(level.langKey())
-                        : Component.literal(level.enName()));
-            }
-        }
-        return line;
     }
 }

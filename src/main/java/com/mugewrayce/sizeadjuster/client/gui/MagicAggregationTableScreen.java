@@ -86,14 +86,17 @@ public class MagicAggregationTableScreen extends AbstractModScreen<MagicAggregat
 
         int seconds = this.menu.getRemainingSeconds();
         if (seconds > 0) {
-            graphics.centeredText(this.font, String.valueOf(seconds),
-                    this.leftPos + 111, this.topPos + 63, 0xFF2549C8);
+            String text = String.valueOf(seconds);
+            int w = this.font.width(text);
+            graphics.text(this.font, text,
+                    this.leftPos + 119 - w / 2, this.topPos + 62, 0xFF2549C8, false);
         }
 
         Component hint = hintComponent(this.menu.getHintCode());
         if (hint != null) {
-            graphics.centeredText(this.font, hint,
-                    this.leftPos + 111, this.topPos + 95, 0xFFFF5555);
+            int w = this.font.width(hint);
+            graphics.text(this.font, hint,
+                    this.leftPos + 119 - w / 2, this.topPos + 95, 0xFFFF5555, false);
         }
     }
 

@@ -14,11 +14,13 @@ import com.mugewrayce.sizeadjuster.magic.MagicNumbers;
 import com.mugewrayce.sizeadjuster.magic.MagicPalette;
 import com.mugewrayce.sizeadjuster.magic.MagicSkill;
 import com.mugewrayce.sizeadjuster.magic.MagicType;
+import com.mugewrayce.sizeadjuster.magic.SoundFx;
 import com.mugewrayce.sizeadjuster.magic.exam.ExamAttack;
 import com.mugewrayce.sizeadjuster.magic.mana.ManaService;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;
@@ -79,8 +81,10 @@ public final class StaffCaster {
             }
             if (selection.isSustained()) {
                 SUSTAINED.put(player.getUUID(), new SustainedState(selection, player.getLookAngle().normalize()));
+                SoundFx.at(player, SoundEvents.AMETHYST_BLOCK_CHIME, 0.7F, 1.4F);
             } else {
                 spawnFormation(serverLevel, serverPlayer, selection, true);
+                SoundFx.at(player, SoundEvents.AMETHYST_BLOCK_RESONATE, 0.8F, 0.9F);
             }
             player.startUsingItem(hand);
             return InteractionResult.CONSUME;
@@ -93,6 +97,7 @@ public final class StaffCaster {
             if (!tryPay(serverPlayer, plan.cost(), false)) {
                 return InteractionResult.SUCCESS;
             }
+            SoundFx.at(player, SoundEvents.EVOKER_CAST_SPELL, 0.8F, 1.2F);
             plan.action().run();
             return InteractionResult.SUCCESS;
         }
@@ -141,6 +146,11 @@ public final class StaffCaster {
 
     private static void castOnce(ServerLevel level, ServerPlayer player, Selection selection) {
         int color = MagicPalette.colorFor(selection.type());
+        if (selection.mode() == CastMode.FORMATION) {
+            SoundFx.at(player, SoundEvents.AMETHYST_BLOCK_CHIME, 0.8F, 0.8F);
+        } else {
+            SoundFx.at(player, SoundEvents.ILLUSIONER_CAST_SPELL, 0.7F, 1.2F);
+        }
         if (selection.mode() == CastMode.POINT) {
             if (selection.type() == MagicType.HEAL) {
                 spawnHealBolt(level, player, color, MagicBoltEntity.KIND_POINT,
@@ -226,6 +236,7 @@ public final class StaffCaster {
         bolt.setHeal(heal, MagicNumbers.regenTicks(levelValue), MagicNumbers.regenAmplifier(levelValue));
         bolt.shoot(look.x, look.y, look.z, 4.5F, 0.0F);
         level.addFreshEntity(bolt);
+        SoundFx.at(player, SoundEvents.BEACON_ACTIVATE, 0.5F, 1.6F);
     }
 
     private static void tickSustained(ServerLevel level, ServerPlayer player, SustainedState state) {

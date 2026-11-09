@@ -9,6 +9,7 @@ import com.mugewrayce.sizeadjuster.magic.MagicType;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
+import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.entity.player.Inventory;
 
 import java.util.List;
@@ -47,11 +48,82 @@ public class MagicStudyLecternScreen extends AbstractModScreen<MagicStudyLectern
     public static final Identifier SMALL_DISABLED =
             id("textures/gui/container/magic_study_lectern_small_disabled.png");
 
+    public static final Identifier ADVANCED_BACKGROUND =
+            id("textures/gui/container/advanced_magic_study_lectern.png");
+    public static final Identifier ADVANCED_BIG_NORMAL =
+            id("textures/gui/container/advanced_magic_study_lectern_big_normal.png");
+    public static final Identifier ADVANCED_BIG_PRESSED =
+            id("textures/gui/container/advanced_magic_study_lectern_big_pressed.png");
+    public static final Identifier ADVANCED_BIG_DISABLED =
+            id("textures/gui/container/advanced_magic_study_lectern_big_disabled.png");
+    public static final Identifier ADVANCED_MID_NORMAL =
+            id("textures/gui/container/advanced_magic_study_lectern_mid_normal.png");
+    public static final Identifier ADVANCED_MID_PRESSED =
+            id("textures/gui/container/advanced_magic_study_lectern_mid_pressed.png");
+    public static final Identifier ADVANCED_MID_DISABLED =
+            id("textures/gui/container/advanced_magic_study_lectern_mid_disabled.png");
+    public static final Identifier ADVANCED_SMALL_NORMAL =
+            id("textures/gui/container/advanced_magic_study_lectern_small_normal.png");
+    public static final Identifier ADVANCED_SMALL_PRESSED =
+            id("textures/gui/container/advanced_magic_study_lectern_small_pressed.png");
+    public static final Identifier ADVANCED_SMALL_DISABLED =
+            id("textures/gui/container/advanced_magic_study_lectern_small_disabled.png");
+
+    /** 讲台 / 高级讲台两套皮肤（背景 + 9 张按钮图 + 标题键）。 */
+    public enum LecternSkin {
+        LECTERN("container.mugewrayce-mod.magic_study_lectern",
+                BACKGROUND, BIG_NORMAL, BIG_PRESSED, BIG_DISABLED,
+                MID_NORMAL, MID_PRESSED, MID_DISABLED,
+                SMALL_NORMAL, SMALL_PRESSED, SMALL_DISABLED),
+        ADVANCED("container.mugewrayce-mod.advanced_magic_study_lectern",
+                ADVANCED_BACKGROUND, ADVANCED_BIG_NORMAL, ADVANCED_BIG_PRESSED,
+                ADVANCED_BIG_DISABLED, ADVANCED_MID_NORMAL, ADVANCED_MID_PRESSED,
+                ADVANCED_MID_DISABLED, ADVANCED_SMALL_NORMAL, ADVANCED_SMALL_PRESSED,
+                ADVANCED_SMALL_DISABLED);
+
+        private final String titleKey;
+        private final Identifier background;
+        private final Identifier bigNormal;
+        private final Identifier bigPressed;
+        private final Identifier bigDisabled;
+        private final Identifier midNormal;
+        private final Identifier midPressed;
+        private final Identifier midDisabled;
+        private final Identifier smallNormal;
+        private final Identifier smallPressed;
+        private final Identifier smallDisabled;
+
+        LecternSkin(String titleKey, Identifier background,
+                    Identifier bigNormal, Identifier bigPressed, Identifier bigDisabled,
+                    Identifier midNormal, Identifier midPressed, Identifier midDisabled,
+                    Identifier smallNormal, Identifier smallPressed, Identifier smallDisabled) {
+            this.titleKey = titleKey;
+            this.background = background;
+            this.bigNormal = bigNormal;
+            this.bigPressed = bigPressed;
+            this.bigDisabled = bigDisabled;
+            this.midNormal = midNormal;
+            this.midPressed = midPressed;
+            this.midDisabled = midDisabled;
+            this.smallNormal = smallNormal;
+            this.smallPressed = smallPressed;
+            this.smallDisabled = smallDisabled;
+        }
+
+        public String titleKey() {
+            return this.titleKey;
+        }
+
+        public Identifier background() {
+            return this.background;
+        }
+    }
+
     private static final int TITLE_COLOR = 0xFF8A0C73;
     private static final int TITLE_SHADOW = 0xFFD9A8CE;
     private static final int LABEL_COLOR = 0xFF404040;
     private static final int HINT_COLOR = 0xFFC1002F;
-    private static final int HINT_WIDTH = 162;
+    private static final int HINT_WIDTH = 192;
 
     private final TriStateButton[] typeButtons = new TriStateButton[LecternRules.TYPE_PAGE_SIZE];
     private final TriStateButton[] majorButtons = new TriStateButton[4];
@@ -68,10 +140,17 @@ public class MagicStudyLecternScreen extends AbstractModScreen<MagicStudyLectern
     private TriStateButton subNextButton;
 
     private int[] lastData;
+    private final LecternSkin skin;
 
     public MagicStudyLecternScreen(MagicStudyLecternMenu menu, Inventory playerInventory,
                                    Component title) {
-        super(menu, playerInventory, title, 238, 248, BACKGROUND);
+        this(menu, playerInventory, title, LecternSkin.LECTERN);
+    }
+
+    public MagicStudyLecternScreen(MagicStudyLecternMenu menu, Inventory playerInventory,
+                                   Component title, LecternSkin skin) {
+        super(menu, playerInventory, title, 238, 248, skin.background());
+        this.skin = skin;
         this.titleLabelX = 8;
         this.titleLabelY = 8;
         this.inventoryLabelX = 39;
@@ -162,24 +241,24 @@ public class MagicStudyLecternScreen extends AbstractModScreen<MagicStudyLectern
         return button;
     }
 
-    private static Identifier textureFor(int width, boolean pressed) {
+    private Identifier textureFor(int width, boolean pressed) {
         if (width >= 54) {
-            return pressed ? BIG_PRESSED : BIG_NORMAL;
+            return pressed ? this.skin.bigPressed : this.skin.bigNormal;
         }
         if (width >= 24) {
-            return pressed ? MID_PRESSED : MID_NORMAL;
+            return pressed ? this.skin.midPressed : this.skin.midNormal;
         }
-        return pressed ? SMALL_PRESSED : SMALL_NORMAL;
+        return pressed ? this.skin.smallPressed : this.skin.smallNormal;
     }
 
-    private static Identifier textureForDisabled(int width) {
+    private Identifier textureForDisabled(int width) {
         if (width >= 54) {
-            return BIG_DISABLED;
+            return this.skin.bigDisabled;
         }
         if (width >= 24) {
-            return MID_DISABLED;
+            return this.skin.midDisabled;
         }
-        return SMALL_DISABLED;
+        return this.skin.smallDisabled;
     }
 
     // ------------------------------------------------------------------
@@ -206,7 +285,6 @@ public class MagicStudyLecternScreen extends AbstractModScreen<MagicStudyLectern
         CastSubMode sub = this.menu.getSelectedSub();
         int level = this.menu.getLevel();
         int skillMask = this.menu.getSkillMask();
-        boolean creative = this.menu.isCreative();
         boolean update = mode == MagicStudyLecternMenu.MODE_UPDATE;
         boolean exam = mode == MagicStudyLecternMenu.MODE_EXAM;
 
@@ -317,10 +395,10 @@ public class MagicStudyLecternScreen extends AbstractModScreen<MagicStudyLectern
             }
         }
 
-        // 块③ 等级：考试模式选好大类后出现；更新模式仅创造模式出现。
+        // 块③ 等级：考试模式选好大类后出现；高级讲台在「更新」模式下也出现。
         boolean block3 = exam
                 ? major != null && (sub != null || LecternRules.examSubsFor(type, major).isEmpty())
-                : update && creative && type != null;
+                : (this.menu.isAdvanced() && update);
         for (int i = 0; i < this.levelButtons.length; i++) {
             TriStateButton button = this.levelButtons[i];
             button.visible = block3;
@@ -367,9 +445,10 @@ public class MagicStudyLecternScreen extends AbstractModScreen<MagicStudyLectern
 
     @Override
     protected void extractLabels(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
-        graphics.text(this.font, this.title, this.titleLabelX + 1, this.titleLabelY + 1,
+        Component shownTitle = Component.translatable(this.skin.titleKey());
+        graphics.text(this.font, shownTitle, this.titleLabelX + 1, this.titleLabelY + 1,
                 TITLE_SHADOW, false);
-        graphics.text(this.font, this.title, this.titleLabelX, this.titleLabelY,
+        graphics.text(this.font, shownTitle, this.titleLabelX, this.titleLabelY,
                 TITLE_COLOR, false);
         graphics.text(this.font, this.playerInventoryTitle,
                 this.inventoryLabelX, this.inventoryLabelY, LABEL_COLOR, false);
@@ -395,7 +474,7 @@ public class MagicStudyLecternScreen extends AbstractModScreen<MagicStudyLectern
         }
         boolean block3 = exam
                 ? major != null && (sub != null || LecternRules.examSubsFor(type, major).isEmpty())
-                : update && this.menu.isCreative() && type != null;
+                : (this.menu.isAdvanced() && update);
         if (block3) {
             this.text(graphics, Component.translatable(LANG + "level"), 38, 116);
         }
@@ -411,18 +490,30 @@ public class MagicStudyLecternScreen extends AbstractModScreen<MagicStudyLectern
     }
 
     private void drawHint(GuiGraphicsExtractor graphics, Component hint) {
-        int x = this.leftPos + 38;
+        int x = this.leftPos + 8;
         int y = this.topPos + 144;
         int width = this.font.width(hint);
         if (width <= HINT_WIDTH) {
             graphics.text(this.font, hint, x, y, HINT_COLOR, false);
             return;
         }
-        float scale = (float) HINT_WIDTH / width;
+        float scale = Math.max(0.8F, (float) HINT_WIDTH / width);
+        if (width * scale <= HINT_WIDTH) {
+            graphics.pose().pushMatrix();
+            graphics.pose().translate(x, y);
+            graphics.pose().scale(scale, scale);
+            graphics.text(this.font, hint, 0, 0, HINT_COLOR, false);
+            graphics.pose().popMatrix();
+            return;
+        }
+        // 0.8 倍仍超宽：按 240px 折成两行（缩放后每行 ≤192px）。
+        List<FormattedCharSequence> lines = this.font.split(hint, (int) (HINT_WIDTH / scale));
         graphics.pose().pushMatrix();
         graphics.pose().translate(x, y);
         graphics.pose().scale(scale, scale);
-        graphics.text(this.font, hint, 0, 0, HINT_COLOR, false);
+        for (int i = 0; i < lines.size() && i < 2; i++) {
+            graphics.text(this.font, lines.get(i), 0, i * 12, HINT_COLOR, false);
+        }
         graphics.pose().popMatrix();
     }
 

@@ -1,5 +1,6 @@
 package com.mugewrayce.sizeadjuster.payload;
 
+import com.mugewrayce.sizeadjuster.magic.SoundFx;
 import com.mugewrayce.sizeadjuster.util.PlayerRoles;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
@@ -9,6 +10,7 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
 
 /**
  * 特殊角色操作请求（客户端 → 服务端），由柃之册/生命转换令牌的角色切换 GUI 发出。
@@ -47,6 +49,7 @@ public record RoleActionPayload(int action, int role) implements CustomPacketPay
             ServerPlayer player = context.player();
             if (payload.action() == ACTION_SELECT) {
                 PlayerRoles.applyRole(player, payload.role());
+                SoundFx.at(player, SoundEvents.PLAYER_BREATH, 0.7F, 1.0F);
             }
             // 回发当前角色编号（选择后为最新值）
             ServerPlayNetworking.send(player, new RoleStatusPayload(PlayerRoles.getRole(player)));

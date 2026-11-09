@@ -46,6 +46,11 @@ public class MagicAttachmentTableMenu extends AbstractModMenu {
     public static final int BUTTON_CRAFT_STAFF = 0;
     public static final int BUTTON_ATTACH = 1;
 
+    /** 合成魔法杖消耗 30；分支 A（法杖升级/附加）不扣。 */
+    public static final int COST_CRAFT_STAFF = ManaCost.COST_CRAFT_STAFF;
+    /** 附加书给普通武器消耗 10。 */
+    public static final int COST_ATTACH_BOOK = ManaCost.COST_ATTACH_BOOK;
+
     public static final int HINT_NONE = 0;
     public static final int HINT_MATERIALS = 1;
     public static final int HINT_CERT = 2;
@@ -131,7 +136,7 @@ public class MagicAttachmentTableMenu extends AbstractModMenu {
         if (server == null || this.table == null) {
             return false;
         }
-        if (!ManaCost.payBlockChunk(server, this.table.getBlockPos(), 30)) {
+        if (!ManaCost.payBlockChunk(server, this.table.getBlockPos(), COST_CRAFT_STAFF)) {
             this.hintCode = HINT_NO_MANA;
             return true;
         }
@@ -226,7 +231,7 @@ public class MagicAttachmentTableMenu extends AbstractModMenu {
         if (server == null || this.table == null) {
             return false;
         }
-        if (!ManaCost.payBlockChunk(server, this.table.getBlockPos(), 10)) {
+        if (!ManaCost.payBlockChunk(server, this.table.getBlockPos(), COST_ATTACH_BOOK)) {
             this.hintCode = HINT_NO_MANA;
             return true;
         }

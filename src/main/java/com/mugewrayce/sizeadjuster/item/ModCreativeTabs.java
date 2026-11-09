@@ -64,6 +64,7 @@ public final class ModCreativeTabs {
                     output.accept(BlockRegistry.MAGIC_STUDY_LECTERN_ITEM);
                     output.accept(BlockRegistry.MAGIC_ATTACHMENT_TABLE_ITEM);
                     output.accept(BlockRegistry.MAGIC_AGGREGATION_TABLE_ITEM);
+                    output.accept(BlockRegistry.ADVANCED_MAGIC_STUDY_LECTERN_ITEM);
                 })
                 .build();
 

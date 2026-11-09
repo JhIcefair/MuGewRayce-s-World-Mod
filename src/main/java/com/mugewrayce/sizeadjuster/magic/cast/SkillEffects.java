@@ -3,9 +3,11 @@ package com.mugewrayce.sizeadjuster.magic.cast;
 import com.mugewrayce.sizeadjuster.entity.MagicBoltEntity;
 import com.mugewrayce.sizeadjuster.magic.MagicNumbers;
 import com.mugewrayce.sizeadjuster.magic.MagicSkill;
+import com.mugewrayce.sizeadjuster.magic.SoundFx;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.entity.LivingEntity;
@@ -76,7 +78,10 @@ public final class SkillEffects {
             return null;
         }
         return new Plan(MagicNumbers.MANA_IGNITE_PER_BLOCK,
-                () -> level.setBlockAndUpdate(pos, BaseFireBlock.getState(level, pos)));
+                () -> {
+                    SoundFx.at(level, pos, SoundEvents.FLINTANDSTEEL_USE, 0.8F, 1.0F);
+                    level.setBlockAndUpdate(pos, BaseFireBlock.getState(level, pos));
+                });
     }
 
     private static Plan planMelt(ServerLevel level, Player player) {
@@ -87,15 +92,24 @@ public final class SkillEffects {
         BlockPos pos = hit.getBlockPos();
         if (level.getBlockState(pos).is(Blocks.BLUE_ICE)) {
             return new Plan(MagicNumbers.MANA_MELT_PER_BLOCK,
-                    () -> level.setBlockAndUpdate(pos, Blocks.PACKED_ICE.defaultBlockState()));
+                    () -> {
+                        SoundFx.at(level, pos, SoundEvents.GLASS_BREAK, 0.7F, 1.1F);
+                        level.setBlockAndUpdate(pos, Blocks.PACKED_ICE.defaultBlockState());
+                    });
         }
         if (level.getBlockState(pos).is(Blocks.PACKED_ICE)) {
             return new Plan(MagicNumbers.MANA_MELT_PER_BLOCK,
-                    () -> level.setBlockAndUpdate(pos, Blocks.ICE.defaultBlockState()));
+                    () -> {
+                        SoundFx.at(level, pos, SoundEvents.GLASS_BREAK, 0.7F, 1.1F);
+                        level.setBlockAndUpdate(pos, Blocks.ICE.defaultBlockState());
+                    });
         }
         if (level.getBlockState(pos).is(Blocks.ICE)) {
             return new Plan(MagicNumbers.MANA_MELT_PER_BLOCK,
-                    () -> level.setBlockAndUpdate(pos, Blocks.WATER.defaultBlockState()));
+                    () -> {
+                        SoundFx.at(level, pos, SoundEvents.GLASS_BREAK, 0.7F, 1.1F);
+                        level.setBlockAndUpdate(pos, Blocks.WATER.defaultBlockState());
+                    });
         }
         return null;
     }
@@ -115,6 +129,7 @@ public final class SkillEffects {
             return null;
         }
         return new Plan(MagicNumbers.MANA_FREEZE_PER_BLOCK, () -> {
+            SoundFx.at(level, pos, SoundEvents.POWDER_SNOW_PLACE, 0.8F, 0.9F);
             if (level.getBlockState(pos).is(Blocks.WATER)) {
                 level.setBlockAndUpdate(pos, Blocks.ICE.defaultBlockState());
             } else if (level.getBlockState(pos).is(Blocks.ICE)) {
@@ -140,7 +155,10 @@ public final class SkillEffects {
             return null;
         }
         return new Plan(MagicNumbers.MANA_MAKE_ICE_PER_BLOCK,
-                () -> level.setBlockAndUpdate(pos, Blocks.ICE.defaultBlockState()));
+                () -> {
+                    SoundFx.at(level, pos, SoundEvents.GLASS_PLACE, 0.8F, 1.2F);
+                    level.setBlockAndUpdate(pos, Blocks.ICE.defaultBlockState());
+                });
     }
 
     private static Plan planLightning(ServerLevel level, Player player) {
@@ -168,7 +186,10 @@ public final class SkillEffects {
             return null;
         }
         return new Plan(MagicNumbers.MANA_CREATE_WATER_PER_BLOCK,
-                () -> level.setBlockAndUpdate(pos, Blocks.WATER.defaultBlockState()));
+                () -> {
+                    SoundFx.at(level, pos, SoundEvents.BUCKET_FILL, 0.8F, 1.0F);
+                    level.setBlockAndUpdate(pos, Blocks.WATER.defaultBlockState());
+                });
     }
 
     private static Plan planFrontFlash(ServerLevel level, Player player) {
@@ -176,8 +197,10 @@ public final class SkillEffects {
         if (!level.getBlockState(pos).isAir()) {
             return null;
         }
-        return new Plan(MagicNumbers.MANA_FLASH, () -> FlashLightTracker.place(level, pos,
-                MagicNumbers.FLASH_LIGHT_TICKS));
+        return new Plan(MagicNumbers.MANA_FLASH, () -> {
+            SoundFx.at(level, pos, SoundEvents.AMETHYST_BLOCK_RESONATE, 0.9F, 1.4F);
+            FlashLightTracker.place(level, pos, MagicNumbers.FLASH_LIGHT_TICKS);
+        });
     }
 
     private static Plan planTargetedFlash(ServerLevel level, Player player) {
@@ -189,8 +212,10 @@ public final class SkillEffects {
         if (!level.getBlockState(pos).isAir()) {
             return null;
         }
-        return new Plan(MagicNumbers.MANA_FLASH, () -> FlashLightTracker.place(level, pos,
-                MagicNumbers.FLASH_LIGHT_TICKS));
+        return new Plan(MagicNumbers.MANA_FLASH, () -> {
+            SoundFx.at(level, pos, SoundEvents.AMETHYST_BLOCK_RESONATE, 0.9F, 1.4F);
+            FlashLightTracker.place(level, pos, MagicNumbers.FLASH_LIGHT_TICKS);
+        });
     }
 
     /** 玩家视线与方块碰撞；无命中返回 null（技能不施放）。 */
