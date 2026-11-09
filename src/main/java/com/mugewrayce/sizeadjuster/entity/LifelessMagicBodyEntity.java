@@ -1,5 +1,8 @@
 package com.mugewrayce.sizeadjuster.entity;
 
+import com.mugewrayce.sizeadjuster.magic.mana.ManaService;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -15,15 +18,28 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 
 /**
- * 没有生命的魔法体（W08a）。
+ * 没有生命的魔法体（W08 内容层 → W13 生成/击杀数值）。
  *
- * <p>本任务只做：实体类型、玩家模型渲染、敌对 AI 骨架、只受魔法伤害、远程物理投射物穿透、
- * 每 3 分钟生成调度骨架。区块魔力概率/3000/5000 消耗/50/80 生命分档留 W13；攻击模式留 W14；
- * 掉落 20 经验与 800 魔力释放留 W13。</p>
- *
- * <p>生成时以玩家默认尺寸为基准随机 0.5x~1.5x（沿用 {@link Attributes#SCALE}）。</p>
+ * <p>共同规则见 {@link AbstractMagicBodyEntity}：只受魔法伤害、物理投射物穿透。
+ * W13 补：</p>
+ * <ul>
+ *   <li>生命分档 <b>50 / 80</b>：{@code createAttributes} 是类型级的，不能按次变化，
+ *       所以由生成方（{@link MagicBodySpawner}）在 spawn 后调 {@link #applyHealthTier}；</li>
+ *   <li>击杀：<b>20 经验</b>（{@code xpReward}；注意 {@code LivingEntity#getExperienceReward} 是
+ *       {@code final}，不能用 override）+ 向所在区块<b>释放 800 魔力</b>；</li>
+ *   <li>尺寸 0.5x~1.5x 仍由构造函数随机（W08 已有）。</li>
+ * </ul>
  */
 public class LifelessMagicBodyEntity extends AbstractMagicBodyEntity {
+
+    /** 低档（区块魔力 ≤10000）生命值。 */
+    public static final int MAX_HEALTH_LOW = 50;
+    /** 高档（区块魔力 >10000）生命值。 */
+    public static final int MAX_HEALTH_HIGH = 80;
+    /** 击杀经验。 */
+    public static final int EXPERIENCE_REWARD = 20;
+    /** 击杀时向所在区块释放的魔力。 */
+    public static final int KILL_MANA_RELEASE = 800;
 
     public LifelessMagicBodyEntity(EntityType<? extends LifelessMagicBodyEntity> type, Level level) {
         super(type, level);
@@ -32,9 +48,10 @@ public class LifelessMagicBodyEntity extends AbstractMagicBodyEntity {
         if (scaleAttribute != null) {
             scaleAttribute.setBaseValue(scale);
         }
+        this.xpReward = EXPERIENCE_REWARD;
     }
 
-    /** W13 接 50/80 生命分档；W08 先用基础值，不伪造区块魔力。 */
+    /** 基础属性仍给 20（类型级默认），实际生命由生成方按档设置为 50 / 80。 */
     public static AttributeSupplier.Builder createAttributes() {
         return Monster.createMonsterAttributes()
                 .add(Attributes.MAX_HEALTH, 20.0)
@@ -42,6 +59,24 @@ public class LifelessMagicBodyEntity extends AbstractMagicBodyEntity {
                 .add(Attributes.ATTACK_DAMAGE, 3.0)
                 .add(Attributes.FOLLOW_RANGE, 50.0)
                 .add(Attributes.SCALE, 1.0);
+    }
+
+    /** 生成后按档设置最大生命并回满。 */
+    public void applyHealthTier(int maxHealth) {
+        var healthAttribute = this.getAttribute(Attributes.MAX_HEALTH);
+        if (healthAttribute != null) {
+            healthAttribute.setBaseValue(maxHealth);
+        }
+        this.setHealth(maxHealth);
+    }
+
+    /** 击杀：向所在区块释放 800 魔力（掉落只有 20 经验，不掉物品）。 */
+    @Override
+    public void die(DamageSource source) {
+        if (this.level() instanceof ServerLevel server) {
+            ManaService.add(server, this.blockPosition(), KILL_MANA_RELEASE);
+        }
+        super.die(source);
     }
 
     @Override
