@@ -88,7 +88,7 @@ public final class ModEntities {
                 EntityType.Builder.<TrialMagicBodyEntity>of(
                         (type, level) -> new TrialMagicBodyEntity(type, level), MobCategory.MONSTER)
                         .sized(0.6F, 1.8F)
-                        .noSave()
+                        // W15 / D-12：去掉 noSave，草案 §9.4 要求“退出登录 / 重启后继续”
                         .clientTrackingRange(10)
                         .updateInterval(2)
                         .build(key("trial_magic_body")));

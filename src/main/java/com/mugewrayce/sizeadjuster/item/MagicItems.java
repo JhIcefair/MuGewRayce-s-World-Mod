@@ -60,9 +60,11 @@ public final class MagicItems {
         eternalCrystal = ItemRegistry.register("eternal_crystal", Item::new);
         magicStudyCertificate = ItemRegistry.register("magic_study_certificate", MagicStudyCertificateItem::new);
         magicBook = ItemRegistry.register("magic_book", MagicBookItem::new);
-        beginnerExamApplication = ItemRegistry.register("beginner_magic_exam_application", Item::new);
+        beginnerExamApplication = ItemRegistry.register("beginner_magic_exam_application",
+                properties -> new ExamApplicationItem(true, properties));
         proficiencyCertificate = ItemRegistry.register("magic_proficiency_certificate", Item::new);
-        trialApplication = ItemRegistry.register("magic_trial_application", Item::new);
+        trialApplication = ItemRegistry.register("magic_trial_application",
+                properties -> new ExamApplicationItem(false, properties));
         promotionCertificate = ItemRegistry.register("magic_trial_promotion_certificate", Item::new);
         attachmentBook = ItemRegistry.register("magic_attachment_book", AttachmentBookItem::new);
         lifeMigrationStone = ItemRegistry.register("life_migration_stone", LifeMigrationStoneItem::new);
