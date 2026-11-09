@@ -1,7 +1,8 @@
 {
-    "variants":  {
-                     "":  {
-                              "model":  "mugewrayce-mod:block/magic_attachment_table"
-                          }
-                 }
+  "variants": {
+    "facing=north": { "model": "mugewrayce-mod:block/magic_attachment_table" },
+    "facing=east": { "model": "mugewrayce-mod:block/magic_attachment_table", "y": 90 },
+    "facing=south": { "model": "mugewrayce-mod:block/magic_attachment_table", "y": 180 },
+    "facing=west": { "model": "mugewrayce-mod:block/magic_attachment_table", "y": 270 }
+  }
 }
