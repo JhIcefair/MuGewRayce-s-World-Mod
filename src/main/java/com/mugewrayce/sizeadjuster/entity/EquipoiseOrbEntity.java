@@ -1,9 +1,11 @@
 package com.mugewrayce.sizeadjuster.entity;
 
+import com.mugewrayce.sizeadjuster.magic.MagicDamage;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -209,7 +211,7 @@ public class EquipoiseOrbEntity extends AbstractStraightProjectile {
             if (this.bypassInvulnerability && target instanceof LivingEntity living) {
                 living.invulnerableTime = 0;
             }
-            target.hurt(this.damageSources().indirectMagic(this, this.getOwner()), this.damage);
+            target.hurt(MagicDamage.of((ServerLevel) this.level(), this, this.getOwner()), this.damage);
             if (this.chargedExplosion) {
                 // 小规模爆炸：不破坏方块，仅冲击/伤害周围
                 this.level().explode(this,

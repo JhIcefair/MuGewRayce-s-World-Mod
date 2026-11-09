@@ -34,6 +34,14 @@ public final class ScreenOpenerHolder {
         }
 
         @Override
+        public void openMagicBookTeleport() {
+        }
+
+        @Override
+        public void openMagicBookExclusion() {
+        }
+
+        @Override
         public void openStudyCert() {
         }
 
@@ -78,6 +86,14 @@ public final class ScreenOpenerHolder {
 
     public static void openMagicBook() {
         opener.openMagicBook();
+    }
+
+    public static void openMagicBookTeleport() {
+        opener.openMagicBookTeleport();
+    }
+
+    public static void openMagicBookExclusion() {
+        opener.openMagicBookExclusion();
     }
 
     public static void openStudyCert() {

@@ -3,7 +3,12 @@
   "package": "com.mugewrayce.sizeadjuster.mixin",
   "compatibilityLevel": "JAVA_25",
   "mixins": [
-    "MagicBodyPlayerProjectileMixin"
+    "MagicBodyPlayerProjectileMixin",
+    "AttachmentBookDamageMixin",
+    "TimePauseEntityMixin",
+    "TimePauseLivingEntityMixin",
+    "TimePauseLevelMixin",
+    "TimePauseServerLevelMixin"
   ],
   "injectors": {
     "defaultRequire": 1

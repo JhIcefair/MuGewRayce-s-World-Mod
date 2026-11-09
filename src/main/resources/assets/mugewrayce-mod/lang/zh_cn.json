@@ -199,5 +199,7 @@
   "gui.mugewrayce-mod.life_migration_stone.title": "生命迁移石",
   "gui.mugewrayce-mod.life_migration_stone.hint": "只能转换为默认 / 有生命的魔法体",
   "gui.mugewrayce-mod.magic_study_lectern.skill_time_pause": "时间暂停",
-  "gui.mugewrayce-mod.magic_study_lectern.skill_space_teleport": "空间传送"
+  "gui.mugewrayce-mod.magic_study_lectern.skill_space_teleport": "空间传送",
+  "message.mugewrayce-mod.mana_insufficient": "魔力不足",
+  "message.mugewrayce-mod.no_skill_selected": "未选择技能"
 }

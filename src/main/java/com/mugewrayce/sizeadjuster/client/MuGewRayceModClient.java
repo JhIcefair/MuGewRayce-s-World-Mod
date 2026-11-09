@@ -3,12 +3,19 @@ package com.mugewrayce.sizeadjuster.client;
 import com.mugewrayce.sizeadjuster.SizeAdjusterMod;
 import com.mugewrayce.sizeadjuster.clientbridge.ScreenOpener;
 import com.mugewrayce.sizeadjuster.clientbridge.ScreenOpenerHolder;
+import com.mugewrayce.sizeadjuster.magic.MagicParticles;
+import com.mugewrayce.sizeadjuster.client.particle.MagicParticleProvider;
+import net.fabricmc.fabric.api.client.particle.v1.ParticleProviderRegistry;
+import com.mugewrayce.sizeadjuster.component.MagicBookData;
+import com.mugewrayce.sizeadjuster.component.ModComponents;
 import com.mugewrayce.sizeadjuster.client.network.W04TestClient;
 import com.mugewrayce.sizeadjuster.client.gui.EquipoiseStaffScreen;
 import com.mugewrayce.sizeadjuster.client.gui.LifeMigrationScreen;
 import com.mugewrayce.sizeadjuster.client.gui.MagicAggregationTableScreen;
 import com.mugewrayce.sizeadjuster.client.gui.MagicAttachmentTableScreen;
+import com.mugewrayce.sizeadjuster.client.gui.MagicBookExclusionScreen;
 import com.mugewrayce.sizeadjuster.client.gui.MagicBookScreen;
+import com.mugewrayce.sizeadjuster.client.gui.MagicBookTeleportScreen;
 import com.mugewrayce.sizeadjuster.client.gui.MagicCrystalScreen;
 import com.mugewrayce.sizeadjuster.client.gui.MagicStaffScreen;
 import com.mugewrayce.sizeadjuster.client.gui.MagicStudyLecternScreen;
@@ -94,6 +101,28 @@ public class MuGewRayceModClient implements ClientModInitializer {
             }
 
             @Override
+            public void openMagicBookTeleport() {
+                Minecraft minecraft = Minecraft.getInstance();
+                if (minecraft.player == null) {
+                    return;
+                }
+                MagicBookData data = minecraft.player.getMainHandItem()
+                        .getOrDefault(ModComponents.MAGIC_BOOK_DATA, MagicBookData.DEFAULT);
+                minecraft.setScreen(new MagicBookTeleportScreen(null, data));
+            }
+
+            @Override
+            public void openMagicBookExclusion() {
+                Minecraft minecraft = Minecraft.getInstance();
+                if (minecraft.player == null) {
+                    return;
+                }
+                MagicBookData data = minecraft.player.getMainHandItem()
+                        .getOrDefault(ModComponents.MAGIC_BOOK_DATA, MagicBookData.DEFAULT);
+                minecraft.setScreen(new MagicBookExclusionScreen(null, data));
+            }
+
+            @Override
             public void openStudyCert() {
                 Minecraft.getInstance().setScreen(new StudyCertScreen());
             }
@@ -160,8 +189,18 @@ public class MuGewRayceModClient implements ClientModInitializer {
             EquipoiseStaffScreen.resetClientState();
         });
 
+        // 被附加书附加过的武器：面板只显示 ×1/×2/×3 倍率（W14a）
+        AttachmentTooltip.register();
+
+        // W14c 灰度粒子：代码染色（点式 / 线式）
+        ParticleProviderRegistry.getInstance().register(
+                MagicParticles.MAGIC_POINT, MagicParticleProvider::new);
+        ParticleProviderRegistry.getInstance().register(
+                MagicParticles.MAGIC_LINE, MagicParticleProvider::new);
+
         // 净化魔法球 / 净化法阵 / 净化魔法阵（法杖施法）渲染器
         EntityRendererRegistry.register(ModEntities.EQUIPOISE_ORB, EquipoiseOrbRenderer::new);
+        EntityRendererRegistry.register(ModEntities.MAGIC_BOLT, MagicBoltRenderer::new);
         EntityRendererRegistry.register(ModEntities.EQUIPOISE_CIRCLE, EquipoiseCircleRenderer::new);
         EntityRendererRegistry.register(ModEntities.EQUIPOISE_FORMATION, EquipoiseFormationRenderer::new);
 
