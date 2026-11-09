@@ -27,6 +27,12 @@ public interface ScreenOpener {
     /** 打开魔法书设置 GUI。 */
     void openMagicBook();
 
+    /** 打开魔法书·空间传送目标坐标界面（W14b 右键入口）。 */
+    void openMagicBookTeleport();
+
+    /** 打开魔法书·时间暂停排除目标界面（W14b 右键入口）。 */
+    void openMagicBookExclusion();
+
     /** 打开魔法学习证查看 GUI。 */
     void openStudyCert();
 

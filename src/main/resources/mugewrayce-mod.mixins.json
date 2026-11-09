@@ -4,7 +4,11 @@
   "compatibilityLevel": "JAVA_25",
   "mixins": [
     "MagicBodyPlayerProjectileMixin",
-    "AttachmentBookDamageMixin"
+    "AttachmentBookDamageMixin",
+    "TimePauseEntityMixin",
+    "TimePauseLivingEntityMixin",
+    "TimePauseLevelMixin",
+    "TimePauseServerLevelMixin"
   ],
   "injectors": {
     "defaultRequire": 1

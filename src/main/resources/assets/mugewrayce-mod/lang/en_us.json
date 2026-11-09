@@ -199,5 +199,7 @@
   "gui.mugewrayce-mod.life_migration_stone.title": "Life Migration Stone",
   "gui.mugewrayce-mod.life_migration_stone.hint": "Only Default / Living Magic Body",
   "gui.mugewrayce-mod.magic_study_lectern.skill_time_pause": "Time Pause",
-  "gui.mugewrayce-mod.magic_study_lectern.skill_space_teleport": "Space Teleport"
+  "gui.mugewrayce-mod.magic_study_lectern.skill_space_teleport": "Space Teleport",
+  "message.mugewrayce-mod.mana_insufficient": "Not enough mana",
+  "message.mugewrayce-mod.no_skill_selected": "No skill selected"
 }

@@ -50,6 +50,17 @@ public class EquipoiseFormationEntity extends Entity {
     /** icefair 自动防御魔法阵（特殊角色 icefair 自带；直径 0.5 格，见 IcefairShields）。 */
     public static final int TYPE_ICEFAIR_SHIELD = 5;
 
+    // ---- W14 魔法体系三阵（对群攻击 / 对己治疗 / 对群治疗 / 普通防御） ----
+    public static final int TYPE_MAGIC_GROUP_ATTACK = 6;
+    public static final int TYPE_MAGIC_SELF_HEAL = 7;
+    public static final int TYPE_MAGIC_GROUP_HEAL = 8;
+    public static final int TYPE_MAGIC_DEFENSE = 9;
+
+    /** 是否 W14 魔法体系的阵（服务端由 MagicFormationEntity 接管 tick）。 */
+    public static boolean isMagicType(int type) {
+        return type >= TYPE_MAGIC_GROUP_ATTACK && type <= TYPE_MAGIC_DEFENSE;
+    }
+
     /** 非防御阵松开后的保留时长：30 秒。 */
     private static final int PERSIST_TICKS = 20 * 30;
 
@@ -112,6 +123,11 @@ public class EquipoiseFormationEntity extends Entity {
         return this.entityData.get(DATA_SIZE);
     }
 
+    /** 施法者 UUID（子类 MagicFormationEntity 用）。 */
+    protected UUID ownerUuid() {
+        return this.ownerUuid;
+    }
+
     /** 松开后保留 30 秒并持续作用。 */
     public void startPersist() {
         this.persisting = true;
@@ -172,7 +188,7 @@ public class EquipoiseFormationEntity extends Entity {
     @Override
     public boolean canBeHitByProjectile() {
         int type = this.getFormationType();
-        return type == TYPE_DEFENSE || type == TYPE_ICEFAIR_SHIELD;
+        return type == TYPE_DEFENSE || type == TYPE_ICEFAIR_SHIELD || type == TYPE_MAGIC_DEFENSE;
     }
 
     /** 防御阵 / icefair 自动防御阵反弹投射物（原版盾牌式反弹：反转方向 + 随机转角）；
@@ -180,7 +196,7 @@ public class EquipoiseFormationEntity extends Entity {
     @Override
     public ProjectileDeflection deflection(Projectile projectile) {
         int type = this.getFormationType();
-        if (type == TYPE_DEFENSE) {
+        if (type == TYPE_DEFENSE || type == TYPE_MAGIC_DEFENSE) {
             return ProjectileDeflection.AIM_DEFLECT;
         }
         if (type == TYPE_ICEFAIR_SHIELD) {
@@ -223,6 +239,12 @@ public class EquipoiseFormationEntity extends Entity {
             return;
         }
 
+        if (isMagicType(type)) {
+            // W14 魔法体系三阵：由 MagicFormationEntity 子类接管效果
+            this.tickMagic(owner);
+            return;
+        }
+
         // 位置跟随
         if (type == TYPE_SINGLE_HEAL) {
             // 单体治愈：跟随施法者本人脚下
@@ -243,6 +265,13 @@ public class EquipoiseFormationEntity extends Entity {
                 this.applyDamage(owner);
             }
         }
+    }
+
+    /**
+     * W14 魔法体系阵的效果钩子（仅服务端；由 {@link MagicFormationEntity} 覆盖）。
+     * 基础类为空实现。
+     */
+    protected void tickMagic(Player owner) {
     }
 
     /**
@@ -290,7 +319,7 @@ public class EquipoiseFormationEntity extends Entity {
     }
 
     /** 群体阵作用范围：半径 3 格水平、阵上方 5 格内的实体。 */
-    private List<LivingEntity> entitiesInRange() {
+    protected List<LivingEntity> entitiesInRange() {
         return this.level().getEntitiesOfClass(LivingEntity.class,
                 new AABB(this.getX() - GROUP_RADIUS, this.getY() - 0.5, this.getZ() - GROUP_RADIUS,
                         this.getX() + GROUP_RADIUS, this.getY() + GROUP_HEIGHT, this.getZ() + GROUP_RADIUS),

@@ -179,7 +179,7 @@ public final class MagicNumbers {
 
     /**
      * 传送距离费：每 100 格 3；不满 100 的余数 >50 算 2、≤50 算 1。
-     * 0→0、50→1、100→3、101→5、150→4、200→6。
+     * 0→0、50→1、100→3、101→4、150→4、151→5、200→6。
      */
     public static int teleportDistanceFee(double distance) {
         if (distance <= 0.0D) {

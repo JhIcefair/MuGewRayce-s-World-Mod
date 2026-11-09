@@ -24,6 +24,7 @@ import net.minecraft.world.entity.MobCategory;
 public final class ModEntities {
 
     public static EntityType<EquipoiseOrbEntity> EQUIPOISE_ORB;
+    public static EntityType<MagicBoltEntity> MAGIC_BOLT;
     public static EntityType<EquipoiseCircleEntity> EQUIPOISE_CIRCLE;
     public static EntityType<EquipoiseFormationEntity> EQUIPOISE_FORMATION;
     public static EntityType<LifelessMagicBodyEntity> LIFELESS_MAGIC_BODY;
@@ -42,6 +43,16 @@ public final class ModEntities {
                         .clientTrackingRange(8)
                         .updateInterval(2)
                         .build(key("equipoise_orb")));
+
+        MAGIC_BOLT = Registry.register(BuiltInRegistries.ENTITY_TYPE,
+                key("magic_bolt"),
+                EntityType.Builder.<MagicBoltEntity>of(
+                        (type, level) -> new MagicBoltEntity(type, level), MobCategory.MISC)
+                        .sized(0.25F, 0.25F)
+                        .noSave()
+                        .clientTrackingRange(8)
+                        .updateInterval(1)
+                        .build(key("magic_bolt")));
 
         EQUIPOISE_CIRCLE = Registry.register(BuiltInRegistries.ENTITY_TYPE,
                 key("equipoise_circle"),

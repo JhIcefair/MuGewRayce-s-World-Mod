@@ -1,6 +1,7 @@
 package com.mugewrayce.sizeadjuster.client.gui;
 
 import com.mugewrayce.sizeadjuster.component.MagicBookData;
+import com.mugewrayce.sizeadjuster.payload.MagicBookCastPayload;
 import com.mugewrayce.sizeadjuster.payload.MagicBookSettingsPayload;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.Minecraft;
@@ -25,7 +26,6 @@ public class MagicBookTeleportScreen extends Screen {
 
     private final MagicBookScreen parent;
     private MagicBookData data;
-
     private EditBox xBox;
     private EditBox yBox;
     private EditBox zBox;
@@ -88,7 +88,10 @@ public class MagicBookTeleportScreen extends Screen {
             ClientPlayNetworking.send(new MagicBookSettingsPayload(
                     next.skill(), next.range(), next.targetX(), next.targetY(), next.targetZ(),
                     next.excluded()));
-            this.parent.applyData(next);
+            ClientPlayNetworking.send(MagicBookCastPayload.INSTANCE);
+            if (this.parent != null) {
+                this.parent.applyData(next);
+            }
             this.goBack();
         } catch (NumberFormatException ignored) {
             this.error = Component.translatable("gui.mugewrayce-mod.common.invalid_input");
@@ -104,7 +107,6 @@ public class MagicBookTeleportScreen extends Screen {
             this.minecraft.setScreen(this.parent);
         }
     }
-
     @Override
     public void onClose() {
         this.goBack();

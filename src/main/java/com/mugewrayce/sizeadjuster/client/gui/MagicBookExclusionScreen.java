@@ -1,6 +1,7 @@
 package com.mugewrayce.sizeadjuster.client.gui;
 
 import com.mugewrayce.sizeadjuster.component.MagicBookData;
+import com.mugewrayce.sizeadjuster.payload.MagicBookCastPayload;
 import com.mugewrayce.sizeadjuster.payload.MagicBookSettingsPayload;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.Minecraft;
@@ -90,6 +91,13 @@ public class MagicBookExclusionScreen extends Screen {
                     .bounds(cx + 104, this.listTop + i * 20, 48, 16)
                     .build());
         }
+
+        // W14b：时间暂停没有别的释放入口，这里补「确认」（复用 common.confirm，不新增键）
+        this.addRenderableWidget(Button.builder(
+                        Component.translatable("gui.mugewrayce-mod.common.confirm"),
+                        b -> this.confirm())
+                .bounds(cx - 60, this.height - 30, 120, 20)
+                .build());
     }
 
     private void addEntry(String prefix) {
@@ -137,7 +145,19 @@ public class MagicBookExclusionScreen extends Screen {
                 this.data.skill(), this.data.range(),
                 this.data.targetX(), this.data.targetY(), this.data.targetZ(),
                 this.data.excluded()));
-        this.parent.applyData(this.data);
+        if (this.parent != null) {
+            this.parent.applyData(this.data);
+        }
+    }
+
+    /** 先写参数、再发释放；服务端会重新校验。 */
+    private void confirm() {
+        ClientPlayNetworking.send(new MagicBookSettingsPayload(
+                this.data.skill(), this.data.range(),
+                this.data.targetX(), this.data.targetY(), this.data.targetZ(),
+                this.data.excluded()));
+        ClientPlayNetworking.send(MagicBookCastPayload.INSTANCE);
+        this.goBack();
     }
 
     private void goBack() {
@@ -178,8 +198,7 @@ public class MagicBookExclusionScreen extends Screen {
         }
 
         if (this.error != null) {
-            graphics.centeredText(this.font, this.error, cx, this.listTop + MAX_VISIBLE * 20 + 20,
-                    0xFFFF5555);
+            graphics.centeredText(this.font, this.error, cx, this.height - 48, 0xFFFF5555);
         }
     }
 }

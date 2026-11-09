@@ -6,6 +6,10 @@ import com.mugewrayce.sizeadjuster.entity.IcefairShields;
 import com.mugewrayce.sizeadjuster.entity.EquipoiseFormationEntity;
 import com.mugewrayce.sizeadjuster.item.EquipoiseStaffItem;
 import com.mugewrayce.sizeadjuster.magic.MagicDamage;
+import com.mugewrayce.sizeadjuster.magic.MagicParticles;
+import com.mugewrayce.sizeadjuster.magic.cast.FlashLightTracker;
+import com.mugewrayce.sizeadjuster.magic.cast.StaffCaster;
+import com.mugewrayce.sizeadjuster.magic.cast.TimePauseZone;
 import com.mugewrayce.sizeadjuster.magic.mana.ManaDetectorRequests;
 import com.mugewrayce.sizeadjuster.magic.mana.ManaLock;
 import com.mugewrayce.sizeadjuster.magic.mana.ManaStorage;
@@ -13,6 +17,7 @@ import com.mugewrayce.sizeadjuster.magic.mana.ManaTicker;
 import com.mugewrayce.sizeadjuster.network.ModNetwork;
 import com.mugewrayce.sizeadjuster.payload.CrystalSettingsPayload;
 import com.mugewrayce.sizeadjuster.payload.LifeMigrationPayload;
+import com.mugewrayce.sizeadjuster.payload.MagicBookCastPayload;
 import com.mugewrayce.sizeadjuster.payload.MagicBookSettingsPayload;
 import com.mugewrayce.sizeadjuster.payload.MagicStaffSelectionPayload;
 import com.mugewrayce.sizeadjuster.payload.ManaDetectorRequestPayload;
@@ -31,6 +36,7 @@ import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Player;
@@ -46,6 +52,7 @@ public class SizeAdjusterMod implements ModInitializer {
         LOGGER.info("mugewrayce mod initializing for Minecraft 26.1...");
 
         ModRegistry.register();
+        MagicParticles.register();
         // 2.0.0 网络骨架：C2S 意图 / S2C 状态（W04，临时测试包）
         ModNetwork.register();
         EquipoiseSwitchPayload.register();
@@ -56,6 +63,7 @@ public class SizeAdjusterMod implements ModInitializer {
         MagicStaffSelectionPayload.register();
         CrystalSettingsPayload.register();
         MagicBookSettingsPayload.register();
+        MagicBookCastPayload.register();
         LifeMigrationPayload.register();
         ManaDetectorRequestPayload.register();
         ManaDetectorResultPayload.register();
@@ -127,11 +135,16 @@ public class SizeAdjusterMod implements ModInitializer {
 
         // 角色持久化：服务器启动（进入/重进世界）载入，停止时再写入，保证退出重进仍保留
         ServerLifecycleEvents.SERVER_STARTED.register(RoleStore::load);
-        ServerLifecycleEvents.SERVER_STOPPING.register(RoleStore::save);
+        ServerLifecycleEvents.SERVER_STOPPING.register(server -> {
+            RoleStore.save(server);
+            FlashLightTracker.clearAll(server);
+        });
         ServerLifecycleEvents.SERVER_STOPPED.register(server -> {
             ManaDetectorRequests.clearAll();
             ManaLock.clearAll();
             ManaTicker.reset();
+            TimePauseZone.clearAll();
+            FlashLightTracker.clearAll();
         });
 
         // 学习证编号计数器（W06）：服务器启动时载入，发号时先原子落盘
@@ -140,6 +153,12 @@ public class SizeAdjusterMod implements ModInitializer {
         // 区块魔力（W13）：每秒结算（自然恢复 + 指定迁移）；不持久化，启动即回到最大值
         ManaTicker.register();
         ServerLifecycleEvents.SERVER_STARTED.register(server -> ManaStorage.resetAll());
+
+        // W14b：时间暂停区域检查（每秒魔力/移动失效）与闪光光源回收
+        ServerTickEvents.END_SERVER_TICK.register(server -> {
+            TimePauseZone.tick(server);
+            FlashLightTracker.tick(server);
+        });
 
         LOGGER.info("mugewrayce mod initialized.");
     }

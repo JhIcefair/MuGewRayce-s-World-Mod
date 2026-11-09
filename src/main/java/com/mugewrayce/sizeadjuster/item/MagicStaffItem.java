@@ -3,20 +3,49 @@ package com.mugewrayce.sizeadjuster.item;
 import com.mugewrayce.sizeadjuster.component.ModComponents;
 import com.mugewrayce.sizeadjuster.component.StaffData;
 import com.mugewrayce.sizeadjuster.component.StaffSelectionData;
+import com.mugewrayce.sizeadjuster.magic.cast.StaffCaster;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 
 /**
- * 普通魔法杖（W08 只注册与默认组件；W12 增加当前选择组件）。
+ * 普通魔法杖（W08 注册 / W12 当前选择组件 / W14b 施法）。
  *
- * <p>默认 {@link StaffData#DEFAULT}（未绑定学习证、无附加内容）与
- * {@link StaffSelectionData#DEFAULT}（未选择）；合成/绑定/升级 GUI 在 W10，
- * 设置 GUI 在 W12，施法在 W14。读取组件时统一用 {@code getOrDefault}。</p>
+ * <p>右键读 {@code staff_selection_data} + {@code staff_data.entries}，服务端校验后施法；
+ * 耗魔走 {@code ManaService.tryConsume}。持续线式 / 普通防御为按住施法。</p>
  */
 public class MagicStaffItem extends Item {
+
+    /** 按住施法的最大使用时长（与净化法杖一致）。 */
+    private static final int USE_DURATION = 72000;
 
     public MagicStaffItem(Item.Properties properties) {
         super(properties
                 .component(ModComponents.STAFF_DATA, StaffData.DEFAULT)
                 .component(ModComponents.STAFF_SELECTION_DATA, StaffSelectionData.DEFAULT));
+    }
+
+    @Override
+    public InteractionResult use(Level level, Player player, InteractionHand hand) {
+        return StaffCaster.use(level, player, hand);
+    }
+
+    @Override
+    public int getUseDuration(ItemStack stack, LivingEntity entity) {
+        return USE_DURATION;
+    }
+
+    @Override
+    public void onUseTick(Level level, LivingEntity entity, ItemStack stack, int remainingUseDuration) {
+        StaffCaster.onUseTick(level, entity, stack, remainingUseDuration);
+    }
+
+    @Override
+    public boolean releaseUsing(ItemStack stack, Level level, LivingEntity entity, int timeLeft) {
+        return StaffCaster.releaseUsing(level, entity, stack, timeLeft);
     }
 }
