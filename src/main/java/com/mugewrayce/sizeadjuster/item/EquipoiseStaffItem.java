@@ -2,8 +2,10 @@ package com.mugewrayce.sizeadjuster.item;
 
 import com.mugewrayce.sizeadjuster.entity.EquipoiseFormationEntity;
 import com.mugewrayce.sizeadjuster.entity.EquipoiseOrbEntity;
+import com.mugewrayce.sizeadjuster.magic.SoundFx;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;
@@ -85,6 +87,8 @@ public class EquipoiseStaffItem extends LiftableItem {
         }
         EquipoiseFormationEntity.deactivateDefense(player.getUUID());
         SUSTAINED_LINES.remove(player.getUUID());
+        // W17：按下右键（起手）音效
+        SoundFx.at(player, SoundEvents.AMETHYST_BLOCK_CHIME, 0.5F, 1.6F);
         player.startUsingItem(hand);
         return InteractionResult.CONSUME;
     }
@@ -137,6 +141,8 @@ public class EquipoiseStaffItem extends LiftableItem {
         if (line == null) {
             line = new SustainedLine(look);
             SUSTAINED_LINES.put(player.getUUID(), line);
+            // W17：持续线式第一次出束
+            SoundFx.at(player, SoundEvents.BEACON_ACTIVATE, 0.5F, 1.2F);
         } else if (line.direction.distanceToSqr(look) <= 1.0E-4) {
             // 视角回到锁定方向：取消“待更新”计时
             line.ticksSinceChange = -1;
@@ -169,6 +175,8 @@ public class EquipoiseStaffItem extends LiftableItem {
     private void releaseSingleLine(ServerLevel level, Player player) {
         SINGLE_LINES.put(player.getUUID(), new SingleLineBurst(level,
                 player.getLookAngle().normalize(), EquipoiseOrbEntity.LINE_SINGLE_ORBS));
+        // W17：单发线式松开发射
+        SoundFx.at(player, SoundEvents.AMETHYST_BLOCK_RESONATE, 0.7F, 1.2F);
     }
 
     /** 推进所有待发射的单发线式点；玩家离线 / 死亡则丢弃剩余点。 */
@@ -220,11 +228,16 @@ public class EquipoiseStaffItem extends LiftableItem {
                 // 单体治愈：对自己使用，跟随自己脚下；同净化水晶法阵大小
                 formation.setPos(player.getX(), player.getY() + 0.02, player.getZ());
                 formation.setSize(2.0F);
+                SoundFx.at(player, SoundEvents.BEACON_ACTIVATE, 0.6F, 1.2F);
             }
             case StaffCastModes.MODE_GROUP_HEAL, StaffCastModes.MODE_GROUP_DAMAGE -> {
                 Vec3 pos = pickGroupPosition(level, player);
                 formation.setPos(pos.x, pos.y + 0.02, pos.z);
                 formation.setSize(6.0F); // 群体：半径 3 格 → 6x6
+                // W17：治愈阵 / 伤害阵各自的生成音效
+                SoundFx.at(player, mode == StaffCastModes.MODE_GROUP_HEAL
+                        ? SoundEvents.BEACON_ACTIVATE : SoundEvents.EVOKER_CAST_SPELL,
+                        0.6F, 1.2F);
             }
             case StaffCastModes.MODE_DEFENSE -> {
                 Vec3 pos = player.getEyePosition().add(player.getLookAngle().scale(
@@ -233,6 +246,7 @@ public class EquipoiseStaffItem extends LiftableItem {
                 formation.setYRot(player.getYRot());
                 formation.setXRot(player.getXRot());
                 formation.setSize(defenseSize(player));
+                SoundFx.at(player, SoundEvents.AMETHYST_BLOCK_RESONATE, 0.6F, 1.2F);
             }
             default -> {
             }
@@ -265,12 +279,14 @@ public class EquipoiseStaffItem extends LiftableItem {
         EquipoiseOrbEntity charging = CHARGING_ORBS.remove(player.getUUID());
         if (heldTicks < CHARGE_THRESHOLD_TICKS) {
             // 单击：立即发射一枚小魔法球（50 伤害，直线）
+            SoundFx.at(player, SoundEvents.ILLUSIONER_CAST_SPELL, 0.6F, 1.4F);
             EquipoiseOrbEntity orb = new EquipoiseOrbEntity(level, player, false);
             orb.setPos(player.getX(), player.getEyeY() - 0.1, player.getZ());
             orb.fireTap(player);
             level.addFreshEntity(orb);
         } else if (charging != null && charging.isAlive()) {
             // 长按充能完成：发射充能中的魔法球（75 伤害 + 爆炸，直线）
+            SoundFx.at(player, SoundEvents.EVOKER_CAST_SPELL, 0.8F, 0.9F);
             charging.launch(player);
         }
     }

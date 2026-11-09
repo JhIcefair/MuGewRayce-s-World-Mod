@@ -51,13 +51,7 @@ public class MagicStudyCertificateItem extends Item {
         tooltip.accept(Component.translatable(
                 "gui.mugewrayce-mod.magic_study_certificate.number",
                 String.format(Locale.ROOT, "%04d", cert.no())));
-        int shown = Math.min(6, cert.entries().size());
-        for (int i = 0; i < shown; i++) {
-            tooltip.accept(CertLines.describe(cert.entries().get(i)));
-        }
-        if (cert.entries().size() > shown) {
-            tooltip.accept(Component.translatable("tooltip.mugewrayce-mod.more",
-                    cert.entries().size() - shown));
-        }
+        // W17 精简：只留编号 + 去重后的类型，不再逐条列模式
+        tooltip.accept(CertLines.describeTypes(cert.entries()));
     }
 }

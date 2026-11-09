@@ -169,10 +169,15 @@ public class ManaDetectorScreen extends Screen {
                 int index = row * GRID + col;
                 int value = this.values[index];
                 String text = value < 0 ? "--" : Integer.toString(value);
-                graphics.centeredText(this.font, Component.literal(text),
-                        col * cell + cell / 2,
-                        row * cell + cell / 2,
-                        0xFFFFFFFF);
+                // W17：格内数字单独放大到约 2×，随格子大小自适应（外层窗口缩放不变）
+                float textScale = Math.min(2.0F,
+                        (cell - 6) / Math.max(1.0F, this.font.width("99999")));
+                graphics.pose().pushMatrix();
+                graphics.pose().translate(col * cell + cell / 2.0F,
+                        row * cell + cell / 2.0F - 4 * textScale);
+                graphics.pose().scale(textScale, textScale);
+                graphics.centeredText(this.font, Component.literal(text), 0, 0, 0xFFFFFFFF);
+                graphics.pose().popMatrix();
             }
         }
         graphics.pose().popMatrix();

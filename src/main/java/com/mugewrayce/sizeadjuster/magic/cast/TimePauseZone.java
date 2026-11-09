@@ -194,9 +194,24 @@ public final class TimePauseZone {
         FROZEN_PLAYER_POSITIONS.remove(playerId);
     }
 
-    /** 结束该使用者的全部区域（重新施放时先清旧区域）。 */
-    private static void end(UUID owner) {
+    /** 结束该使用者的全部区域（重新施放 / 松手时调用；W17 改为 public）。 */
+    public static void end(UUID owner) {
         clearPlayer(owner);
+    }
+
+    /** 该使用者当前是否有活动区域（W17：长按右键的逻辑判断）。 */
+    public static boolean isActive(UUID owner) {
+        if (owner == null) {
+            return false;
+        }
+        for (List<Zone> zones : ZONES.values()) {
+            for (Zone zone : zones) {
+                if (zone.owner.equals(owner)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     public static void clearAll() {

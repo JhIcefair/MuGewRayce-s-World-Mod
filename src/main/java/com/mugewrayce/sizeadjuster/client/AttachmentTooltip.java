@@ -22,7 +22,9 @@ public final class AttachmentTooltip {
                                             java.util.List<Component> lines) -> {
             int level = stack.getOrDefault(ModComponents.ATTACHMENT_DATA, AttachmentData.DEFAULT).level();
             if (level >= 1 && level <= 3) {
-                lines.add(Component.literal("×" + level));
+                // W17：加“魔法攻击”前缀，走语言键（中英各一条）
+                lines.add(Component.translatable("tooltip.mugewrayce-mod.magic_attack",
+                        "×" + level));
             }
         });
     }

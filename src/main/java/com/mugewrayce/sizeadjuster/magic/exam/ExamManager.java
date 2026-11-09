@@ -18,6 +18,7 @@ import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents;
+import net.fabricmc.fabric.api.event.player.UseBlockCallback;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -31,6 +32,9 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.ProblemReporter;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Display;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySpawnReason;
@@ -143,6 +147,35 @@ public final class ExamManager {
                     "message.mugewrayce-mod.exam_chest_guard"));
             save(serverLevel.getServer());
             return false;
+        });
+
+        // W17：开考后 shift + 右键奖励箱 → 给本场存活目标加 30 秒发光描边
+        // （效果同原版敲钟照出袭击者；发起者与旁观玩家都可以用）
+        UseBlockCallback.EVENT.register((player, level, hand, hit) -> {
+            if (player == null || !player.isShiftKeyDown()
+                    || !(level instanceof ServerLevel serverLevel)) {
+                return InteractionResult.PASS;
+            }
+            BlockPos pos = hit.getBlockPos();
+            if (!serverLevel.getBlockState(pos).is(Blocks.CHEST)) {
+                return InteractionResult.PASS;
+            }
+            Active active = findByChest(serverLevel, pos);
+            if (active == null) {
+                return InteractionResult.PASS;
+            }
+            int count = 0;
+            for (UUID id : active.targets) {
+                if (serverLevel.getEntity(id) instanceof LivingEntity living && living.isAlive()) {
+                    living.addEffect(new MobEffectInstance(
+                            MobEffects.GLOWING, 20 * 30, 0, false, false, true));
+                    count++;
+                }
+            }
+            player.sendOverlayMessage(Component.translatable(
+                    "message.mugewrayce-mod.exam_highlight", count));
+            SoundFx.at(player, SoundEvents.UI_BUTTON_CLICK.value(), 0.6F, 1.2F);
+            return InteractionResult.SUCCESS;
         });
     }
 

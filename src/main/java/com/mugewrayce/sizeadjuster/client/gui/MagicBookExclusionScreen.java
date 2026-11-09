@@ -1,7 +1,6 @@
 package com.mugewrayce.sizeadjuster.client.gui;
 
 import com.mugewrayce.sizeadjuster.component.MagicBookData;
-import com.mugewrayce.sizeadjuster.payload.MagicBookCastPayload;
 import com.mugewrayce.sizeadjuster.payload.MagicBookSettingsPayload;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.Minecraft;
@@ -150,13 +149,15 @@ public class MagicBookExclusionScreen extends Screen {
         }
     }
 
-    /** 先写参数、再发释放；服务端会重新校验。 */
+    /** W17：只保存参数（不再发 cast 包）——时间暂停改成“按住右键维持”，界面不负责释放。 */
     private void confirm() {
         ClientPlayNetworking.send(new MagicBookSettingsPayload(
                 this.data.skill(), this.data.range(),
                 this.data.targetX(), this.data.targetY(), this.data.targetZ(),
                 this.data.excluded()));
-        ClientPlayNetworking.send(MagicBookCastPayload.INSTANCE);
+        if (this.parent != null) {
+            this.parent.applyData(this.data);
+        }
         this.goBack();
     }
 

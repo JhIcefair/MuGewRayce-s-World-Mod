@@ -92,7 +92,10 @@ public class MagicBookTeleportScreen extends Screen {
             if (this.parent != null) {
                 this.parent.applyData(next);
             }
-            this.goBack();
+            // W17：确认执行后直接回游戏画面，不再停留在设置界面（ESC 仍回上一级）
+            if (this.minecraft != null) {
+                this.minecraft.setScreen(null);
+            }
         } catch (NumberFormatException ignored) {
             this.error = Component.translatable("gui.mugewrayce-mod.common.invalid_input");
         }

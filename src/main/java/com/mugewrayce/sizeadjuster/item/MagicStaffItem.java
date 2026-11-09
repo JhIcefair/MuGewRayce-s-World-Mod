@@ -71,15 +71,7 @@ public class MagicStaffItem extends Item {
             tooltip.accept(Component.translatable("tooltip.mugewrayce-mod.magic_staff.empty"));
             return;
         }
-        tooltip.accept(Component.translatable("tooltip.mugewrayce-mod.magic_staff.attachments",
-                staff.entries().size()));
-        int shown = Math.min(4, staff.entries().size());
-        for (int i = 0; i < shown; i++) {
-            tooltip.accept(CertLines.describe(staff.entries().get(i)));
-        }
-        if (staff.entries().size() > shown) {
-            tooltip.accept(Component.translatable("tooltip.mugewrayce-mod.more",
-                    staff.entries().size() - shown));
-        }
+        // W17 精简：只留学习证编号 + 去重后的类型，不再列“已附加（N 项）”与逐条模式
+        tooltip.accept(CertLines.describeTypes(staff.entries()));
     }
 }

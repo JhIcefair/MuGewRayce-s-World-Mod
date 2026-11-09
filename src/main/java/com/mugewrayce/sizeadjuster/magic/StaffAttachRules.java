@@ -3,6 +3,7 @@ package com.mugewrayce.sizeadjuster.magic;
 import com.mugewrayce.sizeadjuster.component.CertData;
 import com.mugewrayce.sizeadjuster.component.CertEntry;
 import com.mugewrayce.sizeadjuster.component.StaffData;
+import com.mugewrayce.sizeadjuster.component.StaffSelectionData;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,6 +37,32 @@ public final class StaffAttachRules {
     /** 合成魔法杖：绑学习证编号，并复制该证里的自然魔法条目。 */
     public static StaffData bindCert(CertData cert) {
         return new StaffData(cert.no(), naturalEntries(cert.entries()));
+    }
+
+    /**
+     * 新合成法杖的默认施法选择（W17）：合成后不按 i 键也能直接右键。
+     *
+     * <ol>
+     *   <li>该证第一条“自然系 + 点式”条目 → {@code (type, "point", "")}；</li>
+     *   <li>没有点式（闪光证只有技能）→ 该证第一条技能 → {@code (type, "skill", skillId)}；</li>
+     *   <li>都没有 → {@link StaffSelectionData#DEFAULT}（保持未选择）。</li>
+     * </ol>
+     *
+     * <p>只影响新合成的法杖；已存在的法杖不动。</p>
+     */
+    public static StaffSelectionData defaultSelection(CertData cert) {
+        List<CertEntry> entries = cert == null ? List.of() : naturalEntries(cert.entries());
+        for (CertEntry entry : entries) {
+            if (CastMode.POINT.id().equals(entry.mode())) {
+                return new StaffSelectionData(entry.type(), entry.mode(), entry.sub());
+            }
+        }
+        for (CertEntry entry : entries) {
+            if (CastMode.SKILL.id().equals(entry.mode())) {
+                return new StaffSelectionData(entry.type(), entry.mode(), entry.sub());
+            }
+        }
+        return StaffSelectionData.DEFAULT;
     }
 
     /**

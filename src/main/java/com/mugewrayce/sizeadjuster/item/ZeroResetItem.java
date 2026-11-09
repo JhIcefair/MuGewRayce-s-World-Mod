@@ -1,7 +1,9 @@
 package com.mugewrayce.sizeadjuster.item;
 
 import com.mugewrayce.sizeadjuster.entity.EquipoiseOrbEntity;
+import com.mugewrayce.sizeadjuster.magic.SoundFx;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;
@@ -26,6 +28,9 @@ public class ZeroResetItem extends Item {
     /** 连发间隔（tick）：原版按住右键每 4 tick 重复一次，本物品每 2 tick（快一倍）。 */
     private static final int FIRE_INTERVAL_TICKS = 2;
 
+    /** 音效间隔（tick）：连发时每 4 tick 才响一次，避免叠成噪音（W17）。 */
+    private static final int SOUND_INTERVAL_TICKS = 4;
+
     /** 使用状态持续时间（配合 onUseTick 自控连发节奏）。 */
     private static final int USE_DURATION = 72000;
 
@@ -35,9 +40,9 @@ public class ZeroResetItem extends Item {
 
     @Override
     public InteractionResult use(Level level, Player player, InteractionHand hand) {
-        // 单击：立即发射一发
+        // 单击：立即发射一发（带音效）
         if (!level.isClientSide() && level instanceof ServerLevel serverLevel) {
-            fireOrb(serverLevel, player);
+            fireOrb(serverLevel, player, true);
         }
         // 进入使用状态：长按时由 onUseTick 按连发间隔持续发射
         // （使用期间原版 4 tick 右键延迟不再介入，节奏完全由本物品控制）
@@ -58,7 +63,8 @@ public class ZeroResetItem extends Item {
         int elapsed = USE_DURATION - remainingUseDuration;
         // elapsed: 1,2,3,... → 在 2,4,6,... 各发射一发 → 连发间隔 2 tick
         if (elapsed > 0 && elapsed % FIRE_INTERVAL_TICKS == 0) {
-            fireOrb(serverLevel, player);
+            // W17：音效每 4 tick 一次（4,8,12…），与发射点重叠但不会每发都响
+            fireOrb(serverLevel, player, elapsed % SOUND_INTERVAL_TICKS == 0);
         }
     }
 
@@ -67,7 +73,10 @@ public class ZeroResetItem extends Item {
         return false;
     }
 
-    private void fireOrb(ServerLevel level, Player player) {
+    private void fireOrb(ServerLevel level, Player player, boolean playSound) {
+        if (playSound) {
+            SoundFx.at(player, SoundEvents.WITHER_SHOOT, 0.4F, 1.3F);
+        }
         EquipoiseOrbEntity orb = new EquipoiseOrbEntity(level, player, false);
         orb.configureZeroReset();
         orb.setPos(player.getX(), player.getEyeY() - 0.1, player.getZ());

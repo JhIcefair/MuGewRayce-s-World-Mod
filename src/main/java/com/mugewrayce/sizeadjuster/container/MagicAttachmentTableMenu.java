@@ -144,6 +144,8 @@ public class MagicAttachmentTableMenu extends AbstractModMenu {
         this.consumeStaffMaterials();
         ItemStack staff = new ItemStack(MagicItems.magicStaff);
         staff.set(ModComponents.STAFF_DATA, StaffAttachRules.bindCert(cert));
+        // W17：合成即写入默认选择（第一条自然系点式；闪光证取第一条技能），右键可直接施法
+        staff.set(ModComponents.STAFF_SELECTION_DATA, StaffAttachRules.defaultSelection(cert));
         this.slots.get(SLOT_TARGET).set(staff);
         this.hintCode = HINT_NONE;
         return true;

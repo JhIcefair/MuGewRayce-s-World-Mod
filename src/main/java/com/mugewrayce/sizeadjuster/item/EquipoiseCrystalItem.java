@@ -1,7 +1,11 @@
 package com.mugewrayce.sizeadjuster.item;
 
 import com.mugewrayce.sizeadjuster.entity.EquipoiseCircleEntity;
+import com.mugewrayce.sizeadjuster.magic.SoundFx;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -29,6 +33,13 @@ public class EquipoiseCrystalItem extends LiftableItem {
         super(properties);
     }
 
+    /** W17：开始长按 → 起手音效（原版音效复用，服务端播放）。 */
+    @Override
+    public InteractionResult use(Level level, Player player, InteractionHand hand) {
+        SoundFx.at(player, SoundEvents.AMETHYST_BLOCK_CHIME, 0.6F, 1.2F);
+        return super.use(level, player, hand);
+    }
+
     /** 长按期间：每 tick 施加效果（保持不消失），并生成/跟随净化法阵。 */
     @Override
     public void onUseTick(Level level, LivingEntity entity, ItemStack stack, int remainingUseDuration) {
@@ -51,6 +62,8 @@ public class EquipoiseCrystalItem extends LiftableItem {
     @Override
     public boolean releaseUsing(ItemStack stack, Level level, LivingEntity entity, int timeLeft) {
         if (!level.isClientSide() && level instanceof ServerLevel && entity instanceof Player player) {
+            // W17：松手结束 → 收束音效
+            SoundFx.at(player, SoundEvents.BEACON_DEACTIVATE, 0.5F, 1.4F);
             EquipoiseEffects.apply(player, EquipoiseEffects.CRYSTAL_DURATION_TICKS);
             EquipoiseCircleEntity circle = CIRCLES.remove(player.getUUID());
             if (circle != null && circle.isAlive()) {

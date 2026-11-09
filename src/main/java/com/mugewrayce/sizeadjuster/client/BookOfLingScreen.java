@@ -48,13 +48,13 @@ public class BookOfLingScreen extends Screen {
 
     private void openRoleScreen() {
         if (this.minecraft != null) {
-            this.minecraft.setScreen(new RoleSwitchScreen());
+            this.minecraft.setScreen(new RoleSwitchScreen(this));
         }
     }
 
     private void openSizeScreen() {
         if (this.minecraft != null) {
-            this.minecraft.setScreen(new SizeAdjustScreen());
+            this.minecraft.setScreen(new SizeAdjustScreen(this));
         }
     }
 

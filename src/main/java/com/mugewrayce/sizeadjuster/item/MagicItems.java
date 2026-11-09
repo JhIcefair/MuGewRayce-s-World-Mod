@@ -65,7 +65,8 @@ public final class MagicItems {
         proficiencyCertificate = ItemRegistry.register("magic_proficiency_certificate", Item::new);
         trialApplication = ItemRegistry.register("magic_trial_application",
                 properties -> new ExamApplicationItem(false, properties));
-        promotionCertificate = ItemRegistry.register("magic_trial_promotion_certificate", Item::new);
+        promotionCertificate = ItemRegistry.register("magic_trial_promotion_certificate",
+                PromotionCertificateItem::new);
         attachmentBook = ItemRegistry.register("magic_attachment_book", AttachmentBookItem::new);
         lifeMigrationStone = ItemRegistry.register("life_migration_stone", LifeMigrationStoneItem::new);
     }

@@ -540,12 +540,13 @@ public class MagicStudyLecternMenu extends AbstractModMenu {
     }
 
     /**
-     * 学新模式：前置不满足时按②格证明匹配**前置条目**并模拟升级；
-     * 模拟满足就允许学，同时升级证明绑定的条目并消耗（交接单 §1.10）。
+     * 学新模式：普通讲台按“前置 + ②格证明”判定；高级讲台（W17）跳过前置、
+     * 不读②格、不消耗，且新条目直接带选中等级。
      */
     private void learnNewMode(ItemStack certStack, CertData cert) {
-        LecternRules.LearnResult result = LecternRules.canLearn(
-                cert, this.type, this.major, this.sub, this.proofRef());
+        LecternRules.LearnResult result = this.advanced
+                ? LecternRules.canLearnAdvanced(cert, this.type, this.major, this.sub, this.level)
+                : LecternRules.canLearn(cert, this.type, this.major, this.sub, this.proofRef());
         if (!result.ok()) {
             this.hintCode = result.hintCode();
             return;

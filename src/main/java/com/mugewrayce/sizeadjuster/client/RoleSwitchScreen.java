@@ -1,5 +1,6 @@
 package com.mugewrayce.sizeadjuster.client;
 
+import com.mugewrayce.sizeadjuster.client.gui.BackButton;
 import com.mugewrayce.sizeadjuster.payload.RoleActionPayload;
 import com.mugewrayce.sizeadjuster.util.PlayerRoles;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
@@ -38,8 +39,16 @@ public class RoleSwitchScreen extends Screen {
         clientRoleCode = PlayerRoles.ROLE_DEFAULT;
     }
 
+    /** 上一级界面；为空表示一级入口（生命转换令牌），不显示返回键。 */
+    private final Screen parent;
+
     public RoleSwitchScreen() {
+        this(null);
+    }
+
+    public RoleSwitchScreen(Screen parent) {
         super(Minecraft.getInstance(), Minecraft.getInstance().font, Component.literal("role_switch"));
+        this.parent = parent;
     }
 
     @Override
@@ -50,6 +59,10 @@ public class RoleSwitchScreen extends Screen {
     @Override
     protected void init() {
         super.init();
+        // W17：二级界面左上角补明显返回键（一级入口 parent 为空则不显示）
+        if (this.parent != null) {
+            this.addRenderableWidget(new BackButton(5, 5, this::goBack));
+        }
         List<Integer> roles = PlayerRoles.allRoleCodes();
         int buttonWidth = 160;
         int buttonHeight = 20;
@@ -64,6 +77,12 @@ public class RoleSwitchScreen extends Screen {
         }
         // 向服务端查询当前角色（回发刷新高亮与文字）
         ClientPlayNetworking.send(new RoleActionPayload(RoleActionPayload.ACTION_QUERY, 0));
+    }
+
+    private void goBack() {
+        if (this.minecraft != null) {
+            this.minecraft.setScreen(this.parent);
+        }
     }
 
     private void selectRole(int optionIndex) {
