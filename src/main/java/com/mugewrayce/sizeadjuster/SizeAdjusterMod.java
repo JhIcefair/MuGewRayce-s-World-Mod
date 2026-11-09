@@ -70,6 +70,9 @@ public class SizeAdjusterMod implements ModInitializer {
         ManaDetectorRequests.register();
         RoleActionPayload.register();
         RoleStatusPayload.register();
+        // W15：考试 HUD 包（S2C）+ 考试总控（tick / 死亡 / 破坏 / 停服保存）
+        com.mugewrayce.sizeadjuster.payload.ExamHudPayload.register();
+        com.mugewrayce.sizeadjuster.magic.exam.ExamManager.register();
 
         // 伤害拦截（按玩家当前状态逐层判定）：
         // 1) 手动防御魔法阵（法杖·防御）：生效期间抵挡一切伤害（投射物由阵法实体反弹）；
@@ -140,6 +143,7 @@ public class SizeAdjusterMod implements ModInitializer {
             FlashLightTracker.clearAll(server);
         });
         ServerLifecycleEvents.SERVER_STOPPED.register(server -> {
+            com.mugewrayce.sizeadjuster.magic.exam.ExamManager.reset();
             ManaDetectorRequests.clearAll();
             ManaLock.clearAll();
             ManaTicker.reset();

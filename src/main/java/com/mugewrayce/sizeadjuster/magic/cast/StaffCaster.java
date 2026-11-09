@@ -14,6 +14,7 @@ import com.mugewrayce.sizeadjuster.magic.MagicNumbers;
 import com.mugewrayce.sizeadjuster.magic.MagicPalette;
 import com.mugewrayce.sizeadjuster.magic.MagicSkill;
 import com.mugewrayce.sizeadjuster.magic.MagicType;
+import com.mugewrayce.sizeadjuster.magic.exam.ExamAttack;
 import com.mugewrayce.sizeadjuster.magic.mana.ManaService;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
@@ -175,9 +176,36 @@ public final class StaffCaster {
         }
     }
 
+    /**
+     * 考试 / 试炼目标实体的攻击入口（W15，D-8）。
+     *
+     * <p>复用玩家施法同一套 {@link MagicBoltEntity} + 魔法伤害，只是发起者换成试炼魔法体；
+     * 弹速慢一些，玩家可以躲。注意 {@code StaffCaster} 的其余入口都绑定
+     * {@link ServerPlayer}，所以这里单独开一个 {@link LivingEntity} 版本。</p>
+     */
+    public static void castTrialAttack(ServerLevel level, LivingEntity caster,
+                                       LivingEntity target, ExamAttack attack) {
+        if (caster == null || target == null || !target.isAlive()) {
+            return;
+        }
+        Vec3 from = caster.getEyePosition().subtract(0.0, 0.2, 0.0);
+        Vec3 direction = target.getEyePosition().subtract(from);
+        if (direction.lengthSqr() < 1.0E-6D) {
+            return;
+        }
+        direction = direction.normalize();
+        MagicBoltEntity bolt = new MagicBoltEntity(level, caster);
+        bolt.setPos(from);
+        bolt.setColor(MagicPalette.NATURAL);
+        bolt.setKind(attack == ExamAttack.POINT ? MagicBoltEntity.KIND_POINT : MagicBoltEntity.KIND_LINE);
+        bolt.setDamage(attack.damage());
+        bolt.setBypassInvulnerability(true);
+        bolt.shoot(direction.x, direction.y, direction.z, 1.2F, 0.4F);
+        level.addFreshEntity(bolt);
+    }
+
     private static void spawnDamageBolt(ServerLevel level, ServerPlayer player, int color, int kind,
-                                        float damage, boolean pierce) {
-        Vec3 look = player.getLookAngle().normalize();
+                                        float damage, boolean pierce) {        Vec3 look = player.getLookAngle().normalize();
         MagicBoltEntity bolt = new MagicBoltEntity(level, player);
         bolt.setPos(player.getEyePosition().subtract(0.0, 0.1, 0.0));
         bolt.setColor(color);

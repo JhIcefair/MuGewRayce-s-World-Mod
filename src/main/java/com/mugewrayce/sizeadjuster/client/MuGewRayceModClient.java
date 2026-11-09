@@ -187,6 +187,7 @@ public class MuGewRayceModClient implements ClientModInitializer {
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
             RoleSwitchScreen.resetClientState();
             EquipoiseStaffScreen.resetClientState();
+            com.mugewrayce.sizeadjuster.client.ExamHudRenderer.reset();
         });
 
         // 被附加书附加过的武器：面板只显示 ×1/×2/×3 倍率（W14a）
@@ -232,6 +233,13 @@ public class MuGewRayceModClient implements ClientModInitializer {
                         detectorScreen.acceptResult(payload.values(), payload.complete());
                     }
                 }));
+
+        // W15：考试 HUD（屏幕两行；只有发起者会收到包）
+        com.mugewrayce.sizeadjuster.client.ExamHudRenderer.register();
+        ClientPlayNetworking.registerGlobalReceiver(
+                com.mugewrayce.sizeadjuster.payload.ExamHudPayload.TYPE, (payload, context) ->
+                        context.client().execute(() ->
+                                com.mugewrayce.sizeadjuster.client.ExamHudRenderer.accept(payload)));
 
         // 百杉包 GUI（依赖 fabric-menu-api-v1 的 classtweaker 使 register/ScreenConstructor 公开）
         MenuScreens.register(BaishanBagMenu.TYPE,
