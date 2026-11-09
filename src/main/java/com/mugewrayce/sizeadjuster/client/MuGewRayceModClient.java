@@ -160,6 +160,9 @@ public class MuGewRayceModClient implements ClientModInitializer {
             EquipoiseStaffScreen.resetClientState();
         });
 
+        // 被附加书附加过的武器：面板只显示 ×1/×2/×3 倍率（W14a）
+        AttachmentTooltip.register();
+
         // 净化魔法球 / 净化法阵 / 净化魔法阵（法杖施法）渲染器
         EntityRendererRegistry.register(ModEntities.EQUIPOISE_ORB, EquipoiseOrbRenderer::new);
         EntityRendererRegistry.register(ModEntities.EQUIPOISE_CIRCLE, EquipoiseCircleRenderer::new);

@@ -1,6 +1,7 @@
 package com.mugewrayce.sizeadjuster.entity;
 
 import com.mugewrayce.sizeadjuster.item.EquipoiseEffects;
+import com.mugewrayce.sizeadjuster.magic.MagicDamage;
 import com.mugewrayce.sizeadjuster.util.PlayerRoles;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -31,8 +32,8 @@ import java.util.UUID;
  * 类型（formationType，同步到客户端供渲染）：
  * - SINGLE_HEAL（单体治愈·对自己）：跟随施法者本人脚下；持续对施法者治愈。
  * - GROUP_HEAL（群体治愈）：固定于施法位置；半径 3 格、向上 5 格内实体持续治愈。
- * - GROUP_DAMAGE（群体伤害）：固定于施法位置；每秒对范围内实体 3~10 随机伤害
- *   （不能对施法者自己造成攻击伤害）。
+ * - GROUP_DAMAGE（群体伤害）：固定于施法位置；每秒对范围内实体 15~50 随机伤害
+ *   （`15 + nextInt(36)`，与草案 §6.3 一致）。
  * - DEFENSE（防御）：竖立于玩家前方约 0.5 格（跟随视角 360° 旋转、平面与视线垂直），
  *   保持长按才存在，生效期间抵挡一切伤害（投射物由阵法反弹）；尺寸默认身高对应直径 3 格（随身高缩放）。
  *
@@ -284,7 +285,7 @@ public class EquipoiseFormationEntity extends Entity {
             if (entity == owner) {
                 continue; // 群体伤害不能对施法者自己造成攻击伤害
             }
-            entity.hurt(this.damageSources().indirectMagic(this, owner), damage);
+            entity.hurt(MagicDamage.of((ServerLevel) this.level(), this, owner), damage);
         }
     }
 

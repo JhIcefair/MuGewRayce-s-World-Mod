@@ -1,15 +1,13 @@
 package com.mugewrayce.sizeadjuster.util;
 
 import com.mugewrayce.sizeadjuster.entity.IcefairShields;
-import com.mugewrayce.sizeadjuster.entity.EquipoiseFormationEntity;
-import com.mugewrayce.sizeadjuster.entity.EquipoiseOrbEntity;
+import com.mugewrayce.sizeadjuster.magic.MagicDamage;
 import net.minecraft.core.Holder;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.damagesource.DamageTypes;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 
 import java.util.ArrayList;
@@ -189,18 +187,14 @@ public final class PlayerRoles {
     }
 
     /**
-     * 是否算作"魔法伤害"（魔法体只能受到此类伤害）：
-     * - 净化法杖 / 魔法阵 / 归零 造成的伤害（indirectMagic，来源实体为本模组
-     *   魔法球或魔法阵实体）——目前先如此标记，后续为魔法体系定义专门体系；
-     * - 原版魔法类伤害（magic / indirect_magic：如伤害药水、女巫、守卫者激光等）。
-     * 其余一切伤害（近战、弓箭等远程、火焰、摔落、环境等）都视为物理伤害。
+     * 是否算作“魔法伤害”（魔法体只能受到此类伤害）：
+     * <b>只认本模组注册的 {@code mugewrayce-mod:magic_damage} 类型</b>
+     * （W14 起；净化魔法球 / 魔法阵 / 归零已全部迁移到该类型）。
+     *
+     * <p>原版 {@code magic} / {@code indirect_magic} 不再算本模组的魔法伤害——草案 §8.1
+     * 明确这是“一种独立的体系”；其余一切伤害都视为物理/环境伤害。</p>
      */
     public static boolean isMagicDamage(DamageSource source) {
-        Entity direct = source.getDirectEntity();
-        if (direct instanceof EquipoiseOrbEntity || direct instanceof EquipoiseFormationEntity) {
-            return true;
-        }
-        Holder<DamageType> type = source.typeHolder();
-        return type.is(DamageTypes.MAGIC) || type.is(DamageTypes.INDIRECT_MAGIC);
+        return MagicDamage.is(source);
     }
 }

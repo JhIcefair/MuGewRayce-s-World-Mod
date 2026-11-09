@@ -12,8 +12,8 @@ import net.minecraft.world.level.Level;
  *
  * <p>共同规则：</p>
  * <ul>
- *   <li>只受魔法伤害；W08 用 {@link MagicBodyCombat#isMagicDamage(DamageSource)} 临时判定，W14 换成
- *       {@code mugewrayce-mod:magic_damage}；</li>
+ *   <li>只受魔法伤害；W14 起严格按 {@code mugewrayce-mod:magic_damage} 类型判定
+ *       （见 {@link MagicBodyCombat#isMagicDamage(DamageSource)}）；</li>
  *   <li>非魔法远程投射物直接穿过：{@link #canBeHitByProjectile()} 返回 {@code false}，
  *       但本模组 {@link EquipoiseOrbEntity} 在 {@code canHitEntity} 里对魔法体单独放行；</li>
  *   <li>强制处决（{@code /kill}、虚空）仍然生效；物理近战与普通远程全部免疫。</li>

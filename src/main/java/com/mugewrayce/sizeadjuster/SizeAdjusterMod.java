@@ -5,6 +5,7 @@ import com.mugewrayce.sizeadjuster.data.CertCounter;
 import com.mugewrayce.sizeadjuster.entity.IcefairShields;
 import com.mugewrayce.sizeadjuster.entity.EquipoiseFormationEntity;
 import com.mugewrayce.sizeadjuster.item.EquipoiseStaffItem;
+import com.mugewrayce.sizeadjuster.magic.MagicDamage;
 import com.mugewrayce.sizeadjuster.magic.mana.ManaDetectorRequests;
 import com.mugewrayce.sizeadjuster.magic.mana.ManaLock;
 import com.mugewrayce.sizeadjuster.magic.mana.ManaStorage;
@@ -97,8 +98,8 @@ public class SizeAdjusterMod implements ModInitializer {
                     if (PlayerRoles.isExemptDamage(source)) {
                         return true;
                     }
-                    // 魔法伤害（法杖魔法球/归零魔法球、群体伤害魔法阵等）
-                    if (PlayerRoles.isMagicDamage(source)) {
+                    // 魔法伤害（净化魔法球/归零魔法球、群体伤害魔法阵、W14 魔法体系等）
+                    if (MagicDamage.is(source)) {
                         if (PlayerRoles.isIcefair(role)
                                 && entity.level() instanceof ServerLevel serverLevel) {
                             return IcefairShields.onAttackDamage(serverLevel, player, source);
