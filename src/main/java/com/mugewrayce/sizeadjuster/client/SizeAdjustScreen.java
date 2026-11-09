@@ -1,5 +1,6 @@
 package com.mugewrayce.sizeadjuster.client;
 
+import com.mugewrayce.sizeadjuster.client.gui.BackButton;
 import com.mugewrayce.sizeadjuster.payload.SizeActionPayload;
 import com.mugewrayce.sizeadjuster.util.SizeAttributes;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
@@ -39,8 +40,16 @@ public class SizeAdjustScreen extends Screen {
     /** 输入框区域（init 时按窗口尺寸计算）。 */
     private int boxX, boxY;
 
+    /** 上一级界面；为空表示一级入口，不显示返回键。 */
+    private final Screen parent;
+
     public SizeAdjustScreen() {
+        this(null);
+    }
+
+    public SizeAdjustScreen(Screen parent) {
         super(Minecraft.getInstance(), Minecraft.getInstance().font, Component.literal("player_size"));
+        this.parent = parent;
     }
 
     @Override
@@ -51,6 +60,10 @@ public class SizeAdjustScreen extends Screen {
     @Override
     protected void init() {
         super.init();
+        // W17：二级界面左上角补明显返回键（一级入口 parent 为空则不显示）
+        if (this.parent != null) {
+            this.addRenderableWidget(new BackButton(5, 5, this::goBack));
+        }
         int cx = this.width / 2;
         this.boxX = cx - 60;
         this.boxY = this.height / 2 - 6;
@@ -86,6 +99,12 @@ public class SizeAdjustScreen extends Screen {
     /** 服务端状态回发回调（客户端接收器调用）。 */
     public void setStatus(List<Component> status) {
         this.status = status;
+    }
+
+    private void goBack() {
+        if (this.minecraft != null) {
+            this.minecraft.setScreen(this.parent);
+        }
     }
 
     private void confirmInput() {

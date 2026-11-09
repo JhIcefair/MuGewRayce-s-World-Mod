@@ -4,6 +4,8 @@ import com.mugewrayce.sizeadjuster.component.CertEntry;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 
+import java.util.List;
+
 /**
  * 学习证 / 法杖条目的一行可读描述（W16）。
  *
@@ -56,5 +58,43 @@ public final class CertLines {
             }
         }
         return line;
+    }
+
+    /** 按字段直接描述一条记录（W17：晋级认证 tooltip 用）。 */
+    public static Component describe(String typeId, String modeId, String subId, int level) {
+        return describe(new CertEntry(typeId, modeId, subId, level));
+    }
+
+    /**
+     * 只列“类型”（W17 tooltip 精简）：按讲台类型顺序去重，用 “ / ” 连接。
+     *
+     * <p>学习证 / 法杖标签只显示编号 + 类型，不再逐条列模式。</p>
+     */
+    public static Component describeTypes(List<CertEntry> entries) {
+        MutableComponent names = Component.empty();
+        boolean first = true;
+        for (MagicType type : LecternRules.types()) {
+            if (!hasType(entries, type)) {
+                continue;
+            }
+            if (!first) {
+                names.append(" / ");
+            }
+            names.append(Component.translatable(type.langKey()));
+            first = false;
+        }
+        return Component.translatable("tooltip.mugewrayce-mod.magic_types", names);
+    }
+
+    private static boolean hasType(List<CertEntry> entries, MagicType type) {
+        if (entries == null) {
+            return false;
+        }
+        for (CertEntry entry : entries) {
+            if (type.id().equals(entry.type())) {
+                return true;
+            }
+        }
+        return false;
     }
 }
