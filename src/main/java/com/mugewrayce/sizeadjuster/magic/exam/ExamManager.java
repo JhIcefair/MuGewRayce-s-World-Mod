@@ -149,7 +149,8 @@ public final class ExamManager {
             return false;
         });
 
-        // W17：开考后 shift + 右键奖励箱 → 给本场存活目标加 30 秒发光描边（只给发起者）
+        // W17：开考后 shift + 右键奖励箱 → 给本场存活目标加 30 秒发光描边
+        // （效果同原版敲钟照出袭击者；发起者与旁观玩家都可以用）
         UseBlockCallback.EVENT.register((player, level, hand, hit) -> {
             if (player == null || !player.isShiftKeyDown()
                     || !(level instanceof ServerLevel serverLevel)) {
@@ -161,11 +162,6 @@ public final class ExamManager {
             }
             Active active = findByChest(serverLevel, pos);
             if (active == null) {
-                return InteractionResult.PASS;
-            }
-            if (!active.owner.equals(player.getUUID())) {
-                player.sendOverlayMessage(Component.translatable(
-                        "message.mugewrayce-mod.exam_highlight_owner"));
                 return InteractionResult.PASS;
             }
             int count = 0;
