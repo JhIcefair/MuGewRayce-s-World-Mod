@@ -13,8 +13,10 @@ import net.minecraft.core.component.DataComponentType;
  *
  * <p>正式组件 ID 见接口约定 §2：{@code cert_data} / {@code proficiency_data} /
  * {@code promotion_data} / {@code application_data} / {@code staff_data} /
- * {@code attachment_data} / {@code attachment_book_data} / {@code crystal_data}。
- * W10 新增 {@code attachment_book_data}（第八类，附加书自身等级）。
+ * {@code attachment_data} / {@code attachment_book_data} / {@code crystal_data} /
+ * {@code staff_selection_data} / {@code magic_book_data}。
+ * W10 新增 {@code attachment_book_data}（附加书自身等级）；
+ * W12 新增 {@code staff_selection_data} / {@code magic_book_data}。
  * W03 的 {@code w03_test_data} 保留到 W23 统一清理。</p>
  */
 public final class ModComponents {
