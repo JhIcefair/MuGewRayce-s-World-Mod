@@ -5,10 +5,14 @@ import com.mugewrayce.sizeadjuster.data.CertCounter;
 import com.mugewrayce.sizeadjuster.entity.IcefairShields;
 import com.mugewrayce.sizeadjuster.entity.EquipoiseFormationEntity;
 import com.mugewrayce.sizeadjuster.item.EquipoiseStaffItem;
+import com.mugewrayce.sizeadjuster.magic.mana.ManaDetectorRequests;
 import com.mugewrayce.sizeadjuster.network.ModNetwork;
 import com.mugewrayce.sizeadjuster.payload.CrystalSettingsPayload;
+import com.mugewrayce.sizeadjuster.payload.LifeMigrationPayload;
 import com.mugewrayce.sizeadjuster.payload.MagicBookSettingsPayload;
 import com.mugewrayce.sizeadjuster.payload.MagicStaffSelectionPayload;
+import com.mugewrayce.sizeadjuster.payload.ManaDetectorRequestPayload;
+import com.mugewrayce.sizeadjuster.payload.ManaDetectorResultPayload;
 import com.mugewrayce.sizeadjuster.payload.RoleActionPayload;
 import com.mugewrayce.sizeadjuster.payload.RoleStatusPayload;
 import com.mugewrayce.sizeadjuster.payload.SizeActionPayload;
@@ -48,6 +52,10 @@ public class SizeAdjusterMod implements ModInitializer {
         MagicStaffSelectionPayload.register();
         CrystalSettingsPayload.register();
         MagicBookSettingsPayload.register();
+        LifeMigrationPayload.register();
+        ManaDetectorRequestPayload.register();
+        ManaDetectorResultPayload.register();
+        ManaDetectorRequests.register();
         RoleActionPayload.register();
         RoleStatusPayload.register();
 
@@ -116,6 +124,7 @@ public class SizeAdjusterMod implements ModInitializer {
         // 角色持久化：服务器启动（进入/重进世界）载入，停止时再写入，保证退出重进仍保留
         ServerLifecycleEvents.SERVER_STARTED.register(RoleStore::load);
         ServerLifecycleEvents.SERVER_STOPPING.register(RoleStore::save);
+        ServerLifecycleEvents.SERVER_STOPPED.register(server -> ManaDetectorRequests.clearAll());
 
         // 学习证编号计数器（W06）：服务器启动时载入，发号时先原子落盘
         ServerLifecycleEvents.SERVER_STARTED.register(CertCounter::load);

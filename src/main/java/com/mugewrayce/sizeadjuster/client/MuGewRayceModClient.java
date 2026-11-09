@@ -5,12 +5,15 @@ import com.mugewrayce.sizeadjuster.clientbridge.ScreenOpener;
 import com.mugewrayce.sizeadjuster.clientbridge.ScreenOpenerHolder;
 import com.mugewrayce.sizeadjuster.client.network.W04TestClient;
 import com.mugewrayce.sizeadjuster.client.gui.EquipoiseStaffScreen;
+import com.mugewrayce.sizeadjuster.client.gui.LifeMigrationScreen;
 import com.mugewrayce.sizeadjuster.client.gui.MagicAggregationTableScreen;
 import com.mugewrayce.sizeadjuster.client.gui.MagicAttachmentTableScreen;
 import com.mugewrayce.sizeadjuster.client.gui.MagicBookScreen;
 import com.mugewrayce.sizeadjuster.client.gui.MagicCrystalScreen;
 import com.mugewrayce.sizeadjuster.client.gui.MagicStaffScreen;
 import com.mugewrayce.sizeadjuster.client.gui.MagicStudyLecternScreen;
+import com.mugewrayce.sizeadjuster.client.gui.ManaDetectorScreen;
+import com.mugewrayce.sizeadjuster.client.gui.StudyCertScreen;
 import com.mugewrayce.sizeadjuster.container.BaishanBagMenu;
 import com.mugewrayce.sizeadjuster.container.MagicAggregationTableMenu;
 import com.mugewrayce.sizeadjuster.container.MagicAttachmentTableMenu;
@@ -18,6 +21,7 @@ import com.mugewrayce.sizeadjuster.container.MagicStudyLecternMenu;
 import com.mugewrayce.sizeadjuster.entity.ModEntities;
 import com.mugewrayce.sizeadjuster.item.MagicItems;
 import com.mugewrayce.sizeadjuster.item.ModItems;
+import com.mugewrayce.sizeadjuster.payload.ManaDetectorResultPayload;
 import com.mugewrayce.sizeadjuster.payload.RoleStatusPayload;
 import com.mugewrayce.sizeadjuster.payload.SizeStatusPayload;
 import com.mugewrayce.sizeadjuster.switchitem.EquipoiseSwitchMatrix;
@@ -87,6 +91,21 @@ public class MuGewRayceModClient implements ClientModInitializer {
             @Override
             public void openMagicBook() {
                 Minecraft.getInstance().setScreen(new MagicBookScreen());
+            }
+
+            @Override
+            public void openStudyCert() {
+                Minecraft.getInstance().setScreen(new StudyCertScreen());
+            }
+
+            @Override
+            public void openManaDetector() {
+                Minecraft.getInstance().setScreen(new ManaDetectorScreen());
+            }
+
+            @Override
+            public void openLifeMigration() {
+                Minecraft.getInstance().setScreen(new LifeMigrationScreen());
             }
         });
 
@@ -158,9 +177,22 @@ public class MuGewRayceModClient implements ClientModInitializer {
                     }
                 }));
 
-        // 角色切换 GUI：接收服务端回发的当前角色编号（刷新已打开的角色切换 GUI）
+        // 角色切换 GUI：接收服务端回发的当前角色编号（刷新已打开的角色切换 / 迁移石 GUI）
         ClientPlayNetworking.registerGlobalReceiver(RoleStatusPayload.TYPE, (payload, context) ->
-                context.client().execute(() -> RoleSwitchScreen.onRoleStatus(payload.role())));
+                context.client().execute(() -> {
+                    RoleSwitchScreen.onRoleStatus(payload.role());
+                    if (Minecraft.getInstance().screen instanceof LifeMigrationScreen migrationScreen) {
+                        migrationScreen.onRoleStatus(payload.role());
+                    }
+                }));
+
+        // 魔力值探测器：接收 25 个值（W12 占位为 -1，界面显示 --）
+        ClientPlayNetworking.registerGlobalReceiver(ManaDetectorResultPayload.TYPE, (payload, context) ->
+                context.client().execute(() -> {
+                    if (Minecraft.getInstance().screen instanceof ManaDetectorScreen detectorScreen) {
+                        detectorScreen.acceptResult(payload.values(), payload.complete());
+                    }
+                }));
 
         // 百杉包 GUI（依赖 fabric-menu-api-v1 的 classtweaker 使 register/ScreenConstructor 公开）
         MenuScreens.register(BaishanBagMenu.TYPE,
