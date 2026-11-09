@@ -2,16 +2,24 @@ package com.mugewrayce.sizeadjuster.magic.mana;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.ChunkPos;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * W10 方块功能魔力扣费入口（接口约定 §3.3）。
+ * W10 冻结的方块功能魔力扣费入口（接口约定 §3.3；W13 换真实实现）。
  *
- * <p><b>W10 只负责调用，真实实现留 W13</b>：W13 才做区块魔力存储、8 区块双线性分布、
- * 九宫格位置判定、恢复与释放。当前四个方法全部 {@code return false}（fail closed），
- * 保证 W13 之前不会白送水晶 / 法杖。</p>
- *
- * <p>W10 只验证调用点与参数：聚合台 30000、附加台合成法杖 30、附加书分支 10；
- * 分支 A（法杖升级）不调用。不要在 W10 里读玩家背包或判断永恒水晶 / 供能水晶。</p>
+ * <p>四条规则（草案 §7.2 / §4.2 / §4.3）：</p>
+ * <ul>
+ *   <li>聚合台合成水晶：**原子**扣 30000 = 中心区块 5000 + 周围 3×3 除中心 8 个区块各 3125；
+ *       <b>不遵循</b>常规九宫格/迁移机制；</li>
+ *   <li>附加台「合成魔法杖」30、「附加书给普通武器」10：<b>只扣方块所在区块</b>；
+ *       分支 A（法杖升级/附加）不调用；</li>
+ *   <li><b>方块功能不免除</b>：永恒水晶 / 开着供能的普通水晶都照扣，所以本类
+ *       <b>绝不读玩家背包</b>、也不看锁定状态；</li>
+ *   <li>预检与实扣分离：菜单开始前 {@code canPay*}、完成时 {@code pay*}（W10 已定）。</li>
+ * </ul>
  */
 public final class ManaCost {
 
@@ -25,27 +33,67 @@ public final class ManaCost {
     private ManaCost() {
     }
 
-    /** 聚合台预检：30000 是否可扣（W13 实现）。 */
+    /** 聚合台预检：中心 5000 + 周围 8 个区块各 3125 是否都够（差 1 点也拒）。 */
     public static boolean canPayAggregation(ServerLevel level, BlockPos pos) {
-        // TODO W13: 读取中心区块 5000 + 周围 8 区块各 3125，原子预检。
-        return false;
+        ChunkPos center = ChunkPos.containing(pos);
+        List<ChunkPos> neighbors = neighborChunks(center);
+        int[] values = new int[neighbors.size()];
+        for (int i = 0; i < neighbors.size(); i++) {
+            values[i] = ManaStorage.get(level, neighbors.get(i));
+        }
+        return canPayAggregationValues(ManaStorage.get(level, center), values);
     }
 
-    /** 聚合台完成扣费：30000，原子（W13 实现）。 */
+    /** 聚合台完成扣费：30000，原子（要么全扣，要么不扣）。 */
     public static boolean payAggregation(ServerLevel level, BlockPos pos) {
-        // TODO W13: 真实扣除；W10 只保证调用点在完成时。
-        return false;
+        if (!canPayAggregation(level, pos)) {
+            return false;
+        }
+        ChunkPos center = ChunkPos.containing(pos);
+        ManaStorage.consume(level, center, AGGREGATION_CENTER);
+        for (ChunkPos neighbor : neighborChunks(center)) {
+            ManaStorage.consume(level, neighbor, AGGREGATION_NEIGHBOR);
+        }
+        return true;
     }
 
-    /** 只检查方块所在区块是否够 amount（W13 实现）。 */
+    /** 只检查方块所在区块是否够 amount。 */
     public static boolean canPayBlockChunk(ServerLevel level, BlockPos pos, int amount) {
-        // TODO W13: 只读方块所在区块的魔力值。
-        return false;
+        if (amount <= 0) {
+            return true;
+        }
+        return ManaStorage.get(level, ChunkPos.containing(pos)) >= amount;
     }
 
-    /** 只扣方块所在区块 amount（W13 实现）。 */
+    /** 只扣方块所在区块 amount（附加台 30 / 10）；不分摊、不迁移。 */
     public static boolean payBlockChunk(ServerLevel level, BlockPos pos, int amount) {
-        // TODO W13: 只扣方块所在区块，不做 3×3 分摊。
-        return false;
+        return ManaStorage.consume(level, ChunkPos.containing(pos), amount);
+    }
+
+    /** 3×3 除中心外的 8 个区块（西→东、北→南固定顺序）。 */
+    static List<ChunkPos> neighborChunks(ChunkPos center) {
+        List<ChunkPos> neighbors = new ArrayList<>(8);
+        for (int dz = -1; dz <= 1; dz++) {
+            for (int dx = -1; dx <= 1; dx++) {
+                if (dx == 0 && dz == 0) {
+                    continue;
+                }
+                neighbors.add(new ChunkPos(center.x() + dx, center.z() + dz));
+            }
+        }
+        return neighbors;
+    }
+
+    /** 纯函数版本（自检用）：给定中心值与 8 个邻居值判断能否扣 30000。 */
+    static boolean canPayAggregationValues(int centerValue, int[] neighborValues) {
+        if (centerValue < AGGREGATION_CENTER) {
+            return false;
+        }
+        for (int value : neighborValues) {
+            if (value < AGGREGATION_NEIGHBOR) {
+                return false;
+            }
+        }
+        return true;
     }
 }
