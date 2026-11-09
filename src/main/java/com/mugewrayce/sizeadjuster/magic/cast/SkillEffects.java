@@ -193,14 +193,36 @@ public final class SkillEffects {
     }
 
     private static Plan planFrontFlash(ServerLevel level, Player player) {
-        BlockPos pos = player.blockPosition().relative(player.getDirection());
-        if (!level.getBlockState(pos).isAir()) {
+        // W17：落点改为“沿视线找到的第一个空气块”（从眼位向前步进，最多 4 格），
+        // 避免固定脚下前方 1 格落在方块里导致永远放不下。
+        BlockPos pos = firstAirAlongLook(level, player, 4);
+        if (pos == null) {
             return null;
         }
         return new Plan(MagicNumbers.MANA_FLASH, () -> {
-            SoundFx.at(level, pos, SoundEvents.AMETHYST_BLOCK_RESONATE, 0.9F, 1.4F);
-            FlashLightTracker.place(level, pos, MagicNumbers.FLASH_LIGHT_TICKS);
+            if (FlashLightTracker.place(level, pos, MagicNumbers.FLASH_LIGHT_TICKS)) {
+                SoundFx.at(level, pos, SoundEvents.AMETHYST_BLOCK_RESONATE, 0.9F, 1.4F);
+            }
         });
+    }
+
+    /** 从眼位沿视线向前，返回第一个空气方块（最多 maxSteps 格）；找不到返回 null。 */
+    private static BlockPos firstAirAlongLook(ServerLevel level, Player player, int maxSteps) {
+        Vec3 eye = player.getEyePosition();
+        Vec3 look = player.getLookAngle().normalize();
+        BlockPos previous = null;
+        for (int step = 0; step < maxSteps; step++) {
+            Vec3 point = eye.add(look.scale(step + 0.5D));
+            BlockPos pos = BlockPos.containing(point);
+            if (pos.equals(previous)) {
+                continue;
+            }
+            previous = pos;
+            if (level.getBlockState(pos).isAir()) {
+                return pos;
+            }
+        }
+        return null;
     }
 
     private static Plan planTargetedFlash(ServerLevel level, Player player) {
@@ -213,8 +235,9 @@ public final class SkillEffects {
             return null;
         }
         return new Plan(MagicNumbers.MANA_FLASH, () -> {
-            SoundFx.at(level, pos, SoundEvents.AMETHYST_BLOCK_RESONATE, 0.9F, 1.4F);
-            FlashLightTracker.place(level, pos, MagicNumbers.FLASH_LIGHT_TICKS);
+            if (FlashLightTracker.place(level, pos, MagicNumbers.FLASH_LIGHT_TICKS)) {
+                SoundFx.at(level, pos, SoundEvents.AMETHYST_BLOCK_RESONATE, 0.9F, 1.4F);
+            }
         });
     }
 

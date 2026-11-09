@@ -25,9 +25,23 @@ public final class FlashLightTracker {
     private FlashLightTracker() {
     }
 
-    public static void place(ServerLevel level, BlockPos pos, int ticks) {
+    /**
+     * 在目标位置放置 30 秒光源方块（W17 修复：此前只记时间、从未放置）。
+     *
+     * @return 放得下（目标是空气并已放置）返回 {@code true}；位置被占返回 {@code false}
+     */
+    public static boolean place(ServerLevel level, BlockPos pos, int ticks) {
+        if (level == null || pos == null || ticks <= 0) {
+            return false;
+        }
+        BlockPos target = pos.immutable();
+        if (!level.getBlockState(target).isAir()) {
+            return false;
+        }
+        level.setBlockAndUpdate(target, Blocks.LIGHT.defaultBlockState());
         LIGHTS.computeIfAbsent(level.dimension(), key -> new HashMap<>())
-                .put(pos.immutable(), level.getGameTime() + ticks);
+                .put(target, level.getGameTime() + ticks);
+        return true;
     }
 
     public static void tick(MinecraftServer server) {
