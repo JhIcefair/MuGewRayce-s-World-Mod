@@ -13,8 +13,10 @@ import net.minecraft.core.component.DataComponentType;
  *
  * <p>正式组件 ID 见接口约定 §2：{@code cert_data} / {@code proficiency_data} /
  * {@code promotion_data} / {@code application_data} / {@code staff_data} /
- * {@code attachment_data} / {@code attachment_book_data} / {@code crystal_data}。
- * W10 新增 {@code attachment_book_data}（第八类，附加书自身等级）。
+ * {@code attachment_data} / {@code attachment_book_data} / {@code crystal_data} /
+ * {@code staff_selection_data} / {@code magic_book_data}。
+ * W10 新增 {@code attachment_book_data}（附加书自身等级）；
+ * W12 新增 {@code staff_selection_data} / {@code magic_book_data}。
  * W03 的 {@code w03_test_data} 保留到 W23 统一清理。</p>
  */
 public final class ModComponents {
@@ -73,6 +75,20 @@ public final class ModComponents {
             DataComponentType.<CrystalData>builder()
                     .persistent(CrystalData.CODEC)
                     .networkSynchronized(CrystalData.STREAM_CODEC)
+                    .build();
+
+    /** 普通魔法杖当前选择（{@link StaffSelectionData}，W12 新增）。 */
+    public static final DataComponentType<StaffSelectionData> STAFF_SELECTION_DATA =
+            DataComponentType.<StaffSelectionData>builder()
+                    .persistent(StaffSelectionData.CODEC)
+                    .networkSynchronized(StaffSelectionData.STREAM_CODEC)
+                    .build();
+
+    /** 魔法书设置（{@link MagicBookData}，W12 新增）。 */
+    public static final DataComponentType<MagicBookData> MAGIC_BOOK_DATA =
+            DataComponentType.<MagicBookData>builder()
+                    .persistent(MagicBookData.CODEC)
+                    .networkSynchronized(MagicBookData.STREAM_CODEC)
                     .build();
 
     /** W03 临时测试组件（接口约定 §2.2，W23 清理）。 */

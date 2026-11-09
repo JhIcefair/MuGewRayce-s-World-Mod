@@ -4,14 +4,24 @@ import com.mugewrayce.sizeadjuster.SizeAdjusterMod;
 import com.mugewrayce.sizeadjuster.clientbridge.ScreenOpener;
 import com.mugewrayce.sizeadjuster.clientbridge.ScreenOpenerHolder;
 import com.mugewrayce.sizeadjuster.client.network.W04TestClient;
+import com.mugewrayce.sizeadjuster.client.gui.EquipoiseStaffScreen;
+import com.mugewrayce.sizeadjuster.client.gui.LifeMigrationScreen;
 import com.mugewrayce.sizeadjuster.client.gui.MagicAggregationTableScreen;
 import com.mugewrayce.sizeadjuster.client.gui.MagicAttachmentTableScreen;
+import com.mugewrayce.sizeadjuster.client.gui.MagicBookScreen;
+import com.mugewrayce.sizeadjuster.client.gui.MagicCrystalScreen;
+import com.mugewrayce.sizeadjuster.client.gui.MagicStaffScreen;
 import com.mugewrayce.sizeadjuster.client.gui.MagicStudyLecternScreen;
+import com.mugewrayce.sizeadjuster.client.gui.ManaDetectorScreen;
+import com.mugewrayce.sizeadjuster.client.gui.StudyCertScreen;
 import com.mugewrayce.sizeadjuster.container.BaishanBagMenu;
 import com.mugewrayce.sizeadjuster.container.MagicAggregationTableMenu;
 import com.mugewrayce.sizeadjuster.container.MagicAttachmentTableMenu;
 import com.mugewrayce.sizeadjuster.container.MagicStudyLecternMenu;
 import com.mugewrayce.sizeadjuster.entity.ModEntities;
+import com.mugewrayce.sizeadjuster.item.MagicItems;
+import com.mugewrayce.sizeadjuster.item.ModItems;
+import com.mugewrayce.sizeadjuster.payload.ManaDetectorResultPayload;
 import com.mugewrayce.sizeadjuster.payload.RoleStatusPayload;
 import com.mugewrayce.sizeadjuster.payload.SizeStatusPayload;
 import com.mugewrayce.sizeadjuster.switchitem.EquipoiseSwitchMatrix;
@@ -29,6 +39,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraft.client.renderer.texture.SimpleTexture;
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.item.ItemStack;
 import org.lwjgl.glfw.GLFW;
 
 /**
@@ -37,13 +48,16 @@ import org.lwjgl.glfw.GLFW;
  * <p>净化系切换改为 4 个方向键（默认 ↑↓←→，可在控制设置中修改），
  * 客户端只发送方向意图，由服务端按当前主手重算目标；旧的 i 键切换 GUI 已删除。</p>
  *
- * <p>{@code key.mugewrayce.settings}（i 键）保留给 W16 的法杖/水晶/魔法书设置 GUI，
- * 本任务不注册其按键行为。</p>
+ * <p>{@code key.mugewrayce.settings}（i 键）在 W12 注册：按主手物品打开
+ * 净化法杖 / 普通魔法杖 / 魔法水晶 / 魔法书设置界面；副手不触发。</p>
  */
 public class MuGewRayceModClient implements ClientModInitializer {
 
     /** 方向键：下标与 {@link EquipoiseSwitchMatrix} 的方向码一致（0=↑、1=↓、2=←、3=→）。 */
     private static final KeyMapping[] SWITCH_KEYS = new KeyMapping[EquipoiseSwitchMatrix.DIRECTION_COUNT];
+
+    /** 综合设置按键（i，W12）。 */
+    private static KeyMapping settingsKey;
 
     @Override
     public void onInitializeClient() {
@@ -57,6 +71,41 @@ public class MuGewRayceModClient implements ClientModInitializer {
             @Override
             public void openRoleSwitch() {
                 Minecraft.getInstance().setScreen(new RoleSwitchScreen());
+            }
+
+            @Override
+            public void openEquipoiseStaffSettings() {
+                Minecraft.getInstance().setScreen(new EquipoiseStaffScreen());
+            }
+
+            @Override
+            public void openMagicStaffSettings() {
+                Minecraft.getInstance().setScreen(new MagicStaffScreen());
+            }
+
+            @Override
+            public void openCrystalSettings() {
+                Minecraft.getInstance().setScreen(new MagicCrystalScreen());
+            }
+
+            @Override
+            public void openMagicBook() {
+                Minecraft.getInstance().setScreen(new MagicBookScreen());
+            }
+
+            @Override
+            public void openStudyCert() {
+                Minecraft.getInstance().setScreen(new StudyCertScreen());
+            }
+
+            @Override
+            public void openManaDetector() {
+                Minecraft.getInstance().setScreen(new ManaDetectorScreen());
+            }
+
+            @Override
+            public void openLifeMigration() {
+                Minecraft.getInstance().setScreen(new LifeMigrationScreen());
             }
         });
 
@@ -72,6 +121,9 @@ public class MuGewRayceModClient implements ClientModInitializer {
         SWITCH_KEYS[EquipoiseSwitchMatrix.DIR_RIGHT] =
                 registerSwitchKey("key.mugewrayce.switch_zero_reset", GLFW.GLFW_KEY_RIGHT, category);
 
+        // W12 综合设置按键（i）：按主手物品分发
+        settingsKey = registerSwitchKey("key.mugewrayce.settings", GLFW.GLFW_KEY_I, category);
+
         // 2.0.0 网络骨架（W04，临时）：S2C 状态接收 + 客户端测试命令（W23 清理）
         W04TestClient.register();
 
@@ -83,10 +135,30 @@ public class MuGewRayceModClient implements ClientModInitializer {
                     }
                 }
             }
+
+            // i 键：只按主手分发；副手不触发；已有界面时只清空点击，不叠加打开
+            while (settingsKey.consumeClick()) {
+                if (client.player == null || client.screen != null) {
+                    continue;
+                }
+                ItemStack held = client.player.getMainHandItem();
+                if (held.getItem() == ModItems.equipoiseStaff) {
+                    ScreenOpenerHolder.openEquipoiseStaffSettings();
+                } else if (held.getItem() == MagicItems.magicStaff) {
+                    ScreenOpenerHolder.openMagicStaffSettings();
+                } else if (held.getItem() == MagicItems.magicCrystal) {
+                    ScreenOpenerHolder.openCrystalSettings();
+                } else if (held.getItem() == MagicItems.magicBook) {
+                    ScreenOpenerHolder.openMagicBook();
+                }
+            }
         });
 
         // 断开连接时重置客户端静态 GUI 状态（W01 4.4，避免跨世界/跨服务器残留）
-        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> RoleSwitchScreen.resetClientState());
+        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
+            RoleSwitchScreen.resetClientState();
+            EquipoiseStaffScreen.resetClientState();
+        });
 
         // 净化魔法球 / 净化法阵 / 净化魔法阵（法杖施法）渲染器
         EntityRendererRegistry.register(ModEntities.EQUIPOISE_ORB, EquipoiseOrbRenderer::new);
@@ -105,9 +177,22 @@ public class MuGewRayceModClient implements ClientModInitializer {
                     }
                 }));
 
-        // 角色切换 GUI：接收服务端回发的当前角色编号（刷新已打开的角色切换 GUI）
+        // 角色切换 GUI：接收服务端回发的当前角色编号（刷新已打开的角色切换 / 迁移石 GUI）
         ClientPlayNetworking.registerGlobalReceiver(RoleStatusPayload.TYPE, (payload, context) ->
-                context.client().execute(() -> RoleSwitchScreen.onRoleStatus(payload.role())));
+                context.client().execute(() -> {
+                    RoleSwitchScreen.onRoleStatus(payload.role());
+                    if (Minecraft.getInstance().screen instanceof LifeMigrationScreen migrationScreen) {
+                        migrationScreen.onRoleStatus(payload.role());
+                    }
+                }));
+
+        // 魔力值探测器：接收 25 个值（W12 占位为 -1，界面显示 --）
+        ClientPlayNetworking.registerGlobalReceiver(ManaDetectorResultPayload.TYPE, (payload, context) ->
+                context.client().execute(() -> {
+                    if (Minecraft.getInstance().screen instanceof ManaDetectorScreen detectorScreen) {
+                        detectorScreen.acceptResult(payload.values(), payload.complete());
+                    }
+                }));
 
         // 百杉包 GUI（依赖 fabric-menu-api-v1 的 classtweaker 使 register/ScreenConstructor 公开）
         MenuScreens.register(BaishanBagMenu.TYPE,

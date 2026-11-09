@@ -77,11 +77,11 @@ public final class PlayerRoles {
         return SPECIAL_IDS.get(role - ROLE_SPECIAL_BASE);
     }
 
-    /** 角色中文显示名：默认 / 魔法体 / 特殊-icefair… */
+    /** 角色中文显示名：默认 / 有生命的魔法体 / 特殊-icefair…（W12 改名，编号不变） */
     public static String roleLabel(int role) {
         return switch (role) {
             case ROLE_DEFAULT -> "默认";
-            case ROLE_MAGIC_BODY -> "魔法体";
+            case ROLE_MAGIC_BODY -> "有生命的魔法体";
             default -> isValid(role) ? "特殊-" + specialId(role) : "未知";
         };
     }

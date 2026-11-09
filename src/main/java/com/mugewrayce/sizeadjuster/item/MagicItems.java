@@ -52,19 +52,19 @@ public final class MagicItems {
     }
 
     public static void register() {
-        manaDetector = ItemRegistry.register("mana_detector", Item::new);
+        manaDetector = ItemRegistry.register("mana_detector", ManaDetectorItem::new);
 
         magicStaff = ItemRegistry.register("magic_staff", MagicStaffItem::new);
         magicCrystal = ItemRegistry.register("magic_crystal", MagicCrystalItem::new);
 
         eternalCrystal = ItemRegistry.register("eternal_crystal", Item::new);
-        magicStudyCertificate = ItemRegistry.register("magic_study_certificate", Item::new);
-        magicBook = ItemRegistry.register("magic_book", Item::new);
+        magicStudyCertificate = ItemRegistry.register("magic_study_certificate", MagicStudyCertificateItem::new);
+        magicBook = ItemRegistry.register("magic_book", MagicBookItem::new);
         beginnerExamApplication = ItemRegistry.register("beginner_magic_exam_application", Item::new);
         proficiencyCertificate = ItemRegistry.register("magic_proficiency_certificate", Item::new);
         trialApplication = ItemRegistry.register("magic_trial_application", Item::new);
         promotionCertificate = ItemRegistry.register("magic_trial_promotion_certificate", Item::new);
         attachmentBook = ItemRegistry.register("magic_attachment_book", AttachmentBookItem::new);
-        lifeMigrationStone = ItemRegistry.register("life_migration_stone", Item::new);
+        lifeMigrationStone = ItemRegistry.register("life_migration_stone", LifeMigrationStoneItem::new);
     }
 }

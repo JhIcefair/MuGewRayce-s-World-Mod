@@ -18,8 +18,8 @@ import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 
-/** 魔法聚合台（W10 起：方块右键打开 GUI + 5 秒服务端计时）。 */
-public class MagicAggregationTableBlock extends BaseEntityBlock {
+/** 魔法聚合台（W10 起：方块右键打开 GUI + 5 秒服务端计时；W12 加水平朝向）。 */
+public class MagicAggregationTableBlock extends AbstractFacingMagicBlock {
 
     public static final MapCodec<MagicAggregationTableBlock> CODEC =
             BlockBehaviour.simpleCodec(MagicAggregationTableBlock::new);

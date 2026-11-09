@@ -9,8 +9,8 @@ package com.mugewrayce.sizeadjuster.magic;
  * <p>耗魔数值（点火 3/格、融化 4/格、冻结 3/格、制冰 4/格、召雷 6、生水 2/格、闪光 10、
  * 时间暂停 5/区块 + 每秒 1、空间传送 7/区块 + 3/100 格）属于 W17 魔力值结算，<b>不在本包</b>落地。</p>
  *
- * <p>语言键只登记讲台 GUI 上会出现的 8 个自然魔法技能；起源魔法的两个技能在魔法书 GUI（W16）里显示，
- * 其语言键随 W16 登记，故这里 {@code langKey()} 为 {@code null}。</p>
+ * <p>语言键复用讲台前缀（跨界面共用的魔法术语）；W12 魔法书 GUI 起，
+ * 起源魔法两个技能也登记为 {@code gui.mugewrayce-mod.magic_study_lectern.skill_*}。</p>
  */
 public enum MagicSkill {
 
@@ -23,9 +23,9 @@ public enum MagicSkill {
     FRONT_FLASH("front_flash", "前方闪光", "Front Flash", "skill_flash_front"),
     TARGETED_FLASH("targeted_flash", "指向闪光", "Targeted Flash", "skill_flash_target"),
 
-    // 起源魔法（与魔法书绑定，只有技能、不涉及升级）；英文名待 W16 / 对照表正式登记
-    TIME_PAUSE("time_pause", "时间暂停", "Time Pause", null),
-    SPACE_TELEPORT("space_teleport", "空间传送", "Space Teleport", null);
+    // 起源魔法（与魔法书绑定，只有技能、不涉及升级）
+    TIME_PAUSE("time_pause", "时间暂停", "Time Pause", "skill_time_pause"),
+    SPACE_TELEPORT("space_teleport", "空间传送", "Space Teleport", "skill_space_teleport");
 
     private final String id;
     private final String zhName;
@@ -52,14 +52,12 @@ public enum MagicSkill {
         return enName;
     }
 
-    /** 是否已有冻结的语言键（起源技能要等 W16）。 */
+    /** 是否已有冻结的语言键（W12 起起源技能也有）。 */
     public boolean hasLangKey() {
         return langField != null;
     }
 
-    /**
-     * 讲台 GUI 语言键；起源技能在本版没有登记键，返回 {@code null}。
-     */
+    /** 技能语言键（讲台/魔法书/学习证共用）。 */
     public String langKey() {
         return langField == null ? null : CastMode.LANG_PREFIX + langField;
     }

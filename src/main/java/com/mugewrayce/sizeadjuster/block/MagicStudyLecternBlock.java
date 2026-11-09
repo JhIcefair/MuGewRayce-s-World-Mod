@@ -15,8 +15,8 @@ import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 
-/** 魔法学习讲台（W08b 方块 + 容器；W11 起右键打开 41 格 GUI）。 */
-public class MagicStudyLecternBlock extends BaseEntityBlock {
+/** 魔法学习讲台（W08b 方块 + 容器；W11 起右键打开 41 格 GUI；W12 加水平朝向）。 */
+public class MagicStudyLecternBlock extends AbstractFacingMagicBlock {
 
     public static final MapCodec<MagicStudyLecternBlock> CODEC =
             BlockBehaviour.simpleCodec(MagicStudyLecternBlock::new);

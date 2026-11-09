@@ -15,8 +15,8 @@ import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 
-/** 魔法附加台（W10 起：方块右键打开 GUI；合成/附加为瞬时服务端流程）。 */
-public class MagicAttachmentTableBlock extends BaseEntityBlock {
+/** 魔法附加台（W10 起：方块右键打开 GUI；合成/附加为瞬时服务端流程；W12 加水平朝向）。 */
+public class MagicAttachmentTableBlock extends AbstractFacingMagicBlock {
 
     public static final MapCodec<MagicAttachmentTableBlock> CODEC =
             BlockBehaviour.simpleCodec(MagicAttachmentTableBlock::new);

@@ -1,5 +1,6 @@
 package com.mugewrayce.sizeadjuster.payload;
 
+import com.mugewrayce.sizeadjuster.item.ModItems;
 import com.mugewrayce.sizeadjuster.item.StaffCastModes;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
@@ -10,8 +11,8 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.Identifier;
 
 /**
- * 净化法杖施法模式选择（客户端 → 服务端）：切换 GUI 底部功能行点击后发送，
- * 服务端按玩家记录模式（StaffCastModes），法杖据此决定释放方式。
+ * 净化法杖施法模式选择（客户端 → 服务端）：W12 起由净化法杖设置 GUI 的「确认」
+ * 或 Enter 发送；服务端校验主手仍是净化法杖后，按玩家记录模式（StaffCastModes）。
  */
 public record StaffModePayload(int mode) implements CustomPacketPayload {
 
@@ -34,7 +35,11 @@ public record StaffModePayload(int mode) implements CustomPacketPayload {
     }
 
     private static void handle(StaffModePayload payload, ServerPlayNetworking.Context context) {
-        context.server().execute(() ->
-                StaffCastModes.set(context.player(), payload.mode()));
+        context.server().execute(() -> {
+            if (context.player().getMainHandItem().getItem() != ModItems.equipoiseStaff) {
+                return;
+            }
+            StaffCastModes.set(context.player(), payload.mode());
+        });
     }
 }
