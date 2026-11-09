@@ -2,28 +2,28 @@
   "parent": "minecraft:item/generated",
   "gui_light": "front",
   "textures": {
-    "layer0": "mugewrayce-mod:item/equipoise_staff_in_hand"
+    "layer0": "mugewrayce-mod:item/equipoise_staff"
   },
   "display": {
-    "firstperson_righthand": {
-      "rotation": [-110, 90, -35],
-      "translation": [3.13, 2.0, 0.13],
-      "scale": [1.36, 1.36, 0.68]
-    },
-    "firstperson_lefthand": {
-      "rotation": [-110, -90, 35],
-      "translation": [3.13, 2.0, 0.13],
-      "scale": [1.36, 1.36, 0.68]
-    },
     "thirdperson_righthand": {
-      "rotation": [-85, 270, -40],
+      "rotation": [0, 90, -45],
       "translation": [0, 2, 2],
       "scale": [1.7, 1.7, 0.85]
     },
     "thirdperson_lefthand": {
-      "rotation": [-85, -270, 40],
+      "rotation": [0, 90, 45],
       "translation": [0, 2, 2],
       "scale": [1.7, 1.7, 0.85]
+    },
+    "firstperson_righthand": {
+      "rotation": [0, 90, -45],
+      "translation": [3.13, 2.0, 0.13],
+      "scale": [1.36, 1.36, 0.68]
+    },
+    "firstperson_lefthand": {
+      "rotation": [0, 90, 45],
+      "translation": [3.13, 2.0, 0.13],
+      "scale": [1.36, 1.36, 0.68]
     }
   }
 }
