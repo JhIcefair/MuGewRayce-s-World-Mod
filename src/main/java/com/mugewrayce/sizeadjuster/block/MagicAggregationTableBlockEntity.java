@@ -3,10 +3,12 @@ package com.mugewrayce.sizeadjuster.block;
 import com.mugewrayce.sizeadjuster.component.CrystalData;
 import com.mugewrayce.sizeadjuster.component.ModComponents;
 import com.mugewrayce.sizeadjuster.item.MagicItems;
+import com.mugewrayce.sizeadjuster.magic.SoundFx;
 import com.mugewrayce.sizeadjuster.magic.mana.ManaCost;
 import com.mugewrayce.sizeadjuster.magic.mana.ManaService;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.state.BlockState;
@@ -159,6 +161,7 @@ public class MagicAggregationTableBlockEntity extends AbstractMagicContainerBloc
         this.craftTicks = 0;
         this.hintCode = HINT_NONE;
         this.setChanged();
+        SoundFx.at(level, this.getBlockPos(), SoundEvents.BEACON_POWER_SELECT, 1.0F, 1.2F);
     }
 
     /** 产物：普通魔法水晶，带 30000 魔力（W12 之前产的是默认 0）。 */

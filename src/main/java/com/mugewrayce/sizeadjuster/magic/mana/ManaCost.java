@@ -30,6 +30,11 @@ public final class ManaCost {
     /** 聚合台周围 3×3 除中心外每个区块。 */
     public static final int AGGREGATION_NEIGHBOR = 3125;
 
+    /** 附加台「合成魔法杖」消耗（只扣所在区块）。 */
+    public static final int COST_CRAFT_STAFF = 30;
+    /** 附加台「附加书给普通武器」消耗（只扣所在区块）。 */
+    public static final int COST_ATTACH_BOOK = 10;
+
     private ManaCost() {
     }
 

@@ -1,11 +1,13 @@
 package com.mugewrayce.sizeadjuster.magic.mana;
 
+import com.mugewrayce.sizeadjuster.magic.SoundFx;
 import com.mugewrayce.sizeadjuster.payload.ManaDetectorResultPayload;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -38,6 +40,7 @@ public final class ManaDetectorRequests {
         ServerLevel level = player.level();
         int[] values = ManaProbe.sample(level, centerChunkX, centerChunkZ);
         PENDING.put(player.getUUID(), new Pending(player, values, DELAY_TICKS));
+        SoundFx.at(player, SoundEvents.NOTE_BLOCK_HAT.value(), 0.6F, 1.0F);
     }
 
     /** 玩家断开时清理其待回包请求。 */
@@ -68,6 +71,7 @@ public final class ManaDetectorRequests {
                 continue;
             }
             ServerPlayNetworking.send(player, new ManaDetectorResultPayload(pending.values, true));
+            SoundFx.at(player, SoundEvents.AMETHYST_BLOCK_CHIME, 0.8F, 1.2F);
         }
     }
 

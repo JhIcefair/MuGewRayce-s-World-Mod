@@ -1,6 +1,7 @@
 package com.mugewrayce.sizeadjuster.registry;
 
 import com.mugewrayce.sizeadjuster.SizeAdjusterMod;
+import com.mugewrayce.sizeadjuster.block.AdvancedMagicStudyLecternBlock;
 import com.mugewrayce.sizeadjuster.block.MagicAggregationTableBlock;
 import com.mugewrayce.sizeadjuster.block.MagicAttachmentTableBlock;
 import com.mugewrayce.sizeadjuster.block.MagicStudyLecternBlock;
@@ -33,10 +34,12 @@ public final class BlockRegistry {
     public static Block MAGIC_STUDY_LECTERN;
     public static Block MAGIC_ATTACHMENT_TABLE;
     public static Block MAGIC_AGGREGATION_TABLE;
+    public static Block ADVANCED_MAGIC_STUDY_LECTERN;
 
     public static Item MAGIC_STUDY_LECTERN_ITEM;
     public static Item MAGIC_ATTACHMENT_TABLE_ITEM;
     public static Item MAGIC_AGGREGATION_TABLE_ITEM;
+    public static Item ADVANCED_MAGIC_STUDY_LECTERN_ITEM;
 
     private BlockRegistry() {
     }
@@ -45,10 +48,14 @@ public final class BlockRegistry {
         MAGIC_STUDY_LECTERN = registerBlock("magic_study_lectern", MagicStudyLecternBlock::new);
         MAGIC_ATTACHMENT_TABLE = registerBlock("magic_attachment_table", MagicAttachmentTableBlock::new);
         MAGIC_AGGREGATION_TABLE = registerBlock("magic_aggregation_table", MagicAggregationTableBlock::new);
+        ADVANCED_MAGIC_STUDY_LECTERN = registerBlock(
+                "advanced_magic_study_lectern", AdvancedMagicStudyLecternBlock::new);
 
         MAGIC_STUDY_LECTERN_ITEM = registerBlockItem("magic_study_lectern", MAGIC_STUDY_LECTERN);
         MAGIC_ATTACHMENT_TABLE_ITEM = registerBlockItem("magic_attachment_table", MAGIC_ATTACHMENT_TABLE);
         MAGIC_AGGREGATION_TABLE_ITEM = registerBlockItem("magic_aggregation_table", MAGIC_AGGREGATION_TABLE);
+        ADVANCED_MAGIC_STUDY_LECTERN_ITEM = registerBlockItem(
+                "advanced_magic_study_lectern", ADVANCED_MAGIC_STUDY_LECTERN);
 
         ModBlockEntities.register();
     }
@@ -66,6 +73,6 @@ public final class BlockRegistry {
     }
 
     private static Item registerBlockItem(String id, Block block) {
-        return ItemRegistry.register(id, properties -> new BlockItem(block, properties));
+        return ItemRegistry.registerBlockItem(id, properties -> new BlockItem(block, properties));
     }
 }

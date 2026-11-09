@@ -15,6 +15,7 @@ import com.mugewrayce.sizeadjuster.magic.MagicConflicts;
 import com.mugewrayce.sizeadjuster.magic.MagicDataRules;
 import com.mugewrayce.sizeadjuster.magic.MagicSkill;
 import com.mugewrayce.sizeadjuster.magic.MagicType;
+import com.mugewrayce.sizeadjuster.magic.SoundFx;
 import com.mugewrayce.sizeadjuster.menu.AbstractModMenu;
 import com.mugewrayce.sizeadjuster.menu.InfiniteSlot;
 import com.mugewrayce.sizeadjuster.menu.ModSlot;
@@ -31,6 +32,7 @@ import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.sounds.SoundEvents;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -96,12 +98,15 @@ public class MagicStudyLecternMenu extends AbstractModMenu {
     public static final int DATA_UPDATE_AVAILABLE = 14;
     public static final int DATA_CERT_VALID = 15;
 
-    public static final int FLAG_CREATIVE = 1;
     public static final int FLAG_EXAM_NO_CONTENT = 2;
 
     public static final MenuType<MagicStudyLecternMenu> TYPE =
             MenuRegistry.registerMenu("magic_study_lectern", MagicStudyLecternMenu::new);
+    public static final MenuType<MagicStudyLecternMenu> ADVANCED_TYPE =
+            MenuRegistry.registerMenu("advanced_magic_study_lectern",
+                    (id, inventory) -> new MagicStudyLecternMenu(id, inventory, true));
 
+    private final boolean advanced;
     private final LecternData data = new LecternData();
     private final ItemStack[] lastItems = new ItemStack[SIZE];
 
@@ -115,15 +120,27 @@ public class MagicStudyLecternMenu extends AbstractModMenu {
     private int skillMask;
     private int hintCode = LecternRules.HINT_NONE;
 
-    /** 客户端：MenuType 工厂用。 */
+    /** 客户端：普通讲台 MenuType 工厂用。 */
     public MagicStudyLecternMenu(int id, Inventory playerInventory) {
-        this(id, playerInventory, new SimpleContainer(SIZE), null, null);
+        this(id, playerInventory, false);
+    }
+
+    /** 客户端：高级讲台 MenuType 工厂用。 */
+    public MagicStudyLecternMenu(int id, Inventory playerInventory, boolean advanced) {
+        this(id, playerInventory, new SimpleContainer(SIZE), null, null, advanced);
     }
 
     /** 服务端：绑定真实 BlockEntity 容器 + 方块访问。 */
     public MagicStudyLecternMenu(int id, Inventory playerInventory, Container container,
                                  ContainerLevelAccess access, Block block) {
-        super(TYPE, id, playerInventory, container, SIZE, access, block);
+        this(id, playerInventory, container, access, block, false);
+    }
+
+    /** 服务端：高级讲台绑定自己的容器；advanced 决定 MenuType 与更新规则。 */
+    public MagicStudyLecternMenu(int id, Inventory playerInventory, Container container,
+                                 ContainerLevelAccess access, Block block, boolean advanced) {
+        super(advanced ? ADVANCED_TYPE : TYPE, id, playerInventory, container, SIZE, access, block);
+        this.advanced = advanced;
 
         this.addOneItemSlot(container, SLOT_CERT, 9, 20,
                 stack -> stack.is(MagicItems.magicStudyCertificate));
@@ -193,8 +210,8 @@ public class MagicStudyLecternMenu extends AbstractModMenu {
         return this.data.get(DATA_SKILL_MASK);
     }
 
-    public boolean isCreative() {
-        return (this.data.get(DATA_FLAGS) & FLAG_CREATIVE) != 0;
+    public boolean isAdvanced() {
+        return this.advanced;
     }
 
     public boolean isExamNoContent() {
@@ -319,6 +336,7 @@ public class MagicStudyLecternMenu extends AbstractModMenu {
             this.sub = null;
             this.skillMask = 0;
             this.setSubPage(candidate, 0);
+            this.syncLevelToEntry();
             return;
         }
         this.major = candidate;
@@ -326,6 +344,7 @@ public class MagicStudyLecternMenu extends AbstractModMenu {
         this.skillMask = 0;
         this.setSubPage(candidate, 0);
         this.hintCode = LecternRules.HINT_NONE;
+        this.syncLevelToEntry();
     }
 
     private void selectSub(int index) {
@@ -344,6 +363,7 @@ public class MagicStudyLecternMenu extends AbstractModMenu {
         this.sub = candidate == this.sub ? null : candidate;
         this.setSubPage(this.major, 0);
         this.hintCode = LecternRules.HINT_NONE;
+        this.syncLevelToEntry();
     }
 
     private void toggleSkill(int index) {
@@ -413,6 +433,7 @@ public class MagicStudyLecternMenu extends AbstractModMenu {
         certificate.set(ModComponents.CERT_DATA, cert);
         this.slots.get(SLOT_OUTPUT).set(certificate);
         this.hintCode = LecternRules.HINT_NONE;
+        SoundFx.at(this.playerInventory.player, SoundEvents.BOOK_PAGE_TURN, 0.8F, 1.0F);
     }
 
     /** ② 更新学习证：新类型 / 学新模式 / 证明升级；不要求⑤空、不产出物品。 */
@@ -470,9 +491,8 @@ public class MagicStudyLecternMenu extends AbstractModMenu {
             }
             updated = LecternRules.addEntries(cert, entries);
         } else {
-            int entryLevel = this.isCreative() ? LecternRules.clampLevel(this.level) : 0;
             updated = LecternRules.addEntry(cert, new CertEntry(
-                    this.type.id(), CastMode.POINT.id(), "", entryLevel));
+                    this.type.id(), CastMode.POINT.id(), "", LecternRules.LEVEL_BEGINNER));
         }
         this.applyCert(certStack, updated);
         this.hintCode = LecternRules.HINT_NONE;
@@ -501,15 +521,21 @@ public class MagicStudyLecternMenu extends AbstractModMenu {
         this.hintCode = LecternRules.HINT_NONE;
     }
 
-    /** 已学条目：只能靠②格证明升级（熟练 → I；晋级 → target），成功后消耗证明。 */
+    /** 已学条目：讲台只能靠②格证明升级；高级讲台无条件设等级、不读②格、不消耗。 */
     private void upgradeEntry(ItemStack certStack, CertData cert, CertEntry entry) {
-        LecternRules.ApplyResult result = LecternRules.applyProof(entry, this.proofRef());
+        LecternRules.ApplyResult result = this.advanced
+                ? LecternRules.forceLevel(entry, this.level)
+                : LecternRules.applyProof(entry, this.proofRef());
         if (!result.ok()) {
             this.hintCode = result.hintCode();
             return;
         }
         this.applyCert(certStack, LecternRules.replaceEntry(cert, entry, result.newLevel()));
-        this.shrinkProof();
+        if (!this.advanced) {
+            this.shrinkProof();
+        } else {
+            SoundFx.at(this.playerInventory.player, SoundEvents.PLAYER_LEVELUP, 0.5F, 1.4F);
+        }
         this.hintCode = LecternRules.HINT_NONE;
     }
 
@@ -519,8 +545,7 @@ public class MagicStudyLecternMenu extends AbstractModMenu {
      */
     private void learnNewMode(ItemStack certStack, CertData cert) {
         LecternRules.LearnResult result = LecternRules.canLearn(
-                cert, this.type, this.major, this.sub, this.proofRef(),
-                this.isCreative(), this.level);
+                cert, this.type, this.major, this.sub, this.proofRef());
         if (!result.ok()) {
             this.hintCode = result.hintCode();
             return;
@@ -560,6 +585,7 @@ public class MagicStudyLecternMenu extends AbstractModMenu {
         stack.set(ModComponents.APPLICATION_DATA, application);
         this.slots.get(SLOT_OUTPUT).set(stack);
         this.hintCode = LecternRules.HINT_NONE;
+        SoundFx.at(this.playerInventory.player, SoundEvents.BOOK_PAGE_TURN, 0.8F, 1.0F);
     }
 
     // ------------------------------------------------------------------
@@ -754,6 +780,22 @@ public class MagicStudyLecternMenu extends AbstractModMenu {
         return stack.isEmpty() ? null : stack.get(ModComponents.CERT_DATA);
     }
 
+    /**
+     * 高级讲台更新模式：选中现有条目时把 DATA_LEVEL 初始化成该条目当前等级，
+     * 没动等级就确认 = 保持原级（W16 §1.4）。技能 / 未选条目 → 0。
+     */
+    private void syncLevelToEntry() {
+        if (!this.advanced || this.mode != MODE_UPDATE) {
+            return;
+        }
+        if (this.type == null || this.major == null || this.major == CastMode.SKILL) {
+            this.level = 0;
+            return;
+        }
+        this.level = LecternRules.findEntry(this.certData(), this.type, this.major, this.sub)
+                .map(CertEntry::level).orElse(0);
+    }
+
     private boolean certValid() {
         ItemStack stack = this.slots.get(SLOT_CERT).getItem();
         if (stack.isEmpty() || !stack.is(MagicItems.magicStudyCertificate)) {
@@ -781,6 +823,7 @@ public class MagicStudyLecternMenu extends AbstractModMenu {
     private void applyCert(ItemStack certStack, CertData updated) {
         certStack.set(ModComponents.CERT_DATA, updated);
         this.slots.get(SLOT_CERT).setChanged();
+        SoundFx.at(this.playerInventory.player, SoundEvents.ENCHANTMENT_TABLE_USE, 0.6F, 1.2F);
     }
 
     private void shrinkProof() {
@@ -867,9 +910,8 @@ public class MagicStudyLecternMenu extends AbstractModMenu {
             case DATA_SUB_PAGE_SKILL -> this.subPage[3];
             case DATA_LEVEL -> this.level;
             case DATA_HINT -> this.hintCode;
-            case DATA_FLAGS -> (this.playerInventory.player.isCreative() ? FLAG_CREATIVE : 0)
-                    | (this.mode == MODE_EXAM && this.type != null
-                    && LecternRules.examMajorsFor(this.type).isEmpty() ? FLAG_EXAM_NO_CONTENT : 0);
+            case DATA_FLAGS -> this.mode == MODE_EXAM && this.type != null
+                    && LecternRules.examMajorsFor(this.type).isEmpty() ? FLAG_EXAM_NO_CONTENT : 0;
             case DATA_SKILL_MASK -> this.skillMask;
             case DATA_CAN_CONFIRM -> this.canConfirm() ? 1 : 0;
             case DATA_UPDATE_AVAILABLE -> this.certValid() ? 1 : 0;

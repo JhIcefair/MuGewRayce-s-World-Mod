@@ -211,18 +211,11 @@ public final class LecternRules {
     }
 
     /**
-     * 新条目的初始等级：非创造模式一律初学者；创造模式可用选中的等级，
-     * 但技能与“普通防御”（无等级）始终为初学者（§1.8 / §6.5）。
+     * 新条目的初始等级（W16 起恒为初学者）：讲台不再有“创造模式直接选等级”的入口；
+     * 高等级只由高级讲台的更新/升级或证明/认证产生。
      */
-    public static int entryLevel(MagicType type, CastMode mode, CastSubMode sub,
-                                 boolean creative, int selectedLevel) {
-        if (!creative || mode == null || mode == CastMode.SKILL) {
-            return LEVEL_BEGINNER;
-        }
-        if (sub == CastSubMode.FORMATION_OUTWARD_DEFENSE) {
-            return LEVEL_BEGINNER;
-        }
-        return clampLevel(selectedLevel);
+    public static int entryLevel(MagicType type, CastMode mode, CastSubMode sub) {
+        return LEVEL_BEGINNER;
     }
 
     // ------------------------------------------------------------------
@@ -431,6 +424,24 @@ public final class LecternRules {
         return applyProof(target.get(), proof);
     }
 
+    /**
+     * 高级讲台的无条件更新（W16）：技能条目不可升级，其余直接把等级设为选中值。
+     *
+     * <p>{@code selectedLevel <= 0} 表示“没有动等级”，按 W16 §1.4 保持条目当前等级，
+     * 不解释成“降为初学者”。本方法不消耗②格证明。</p>
+     */
+    public static ApplyResult forceLevel(CertEntry entry, int selectedLevel) {
+        if (entry == null) {
+            return ApplyResult.fail(HINT_NEED_PROOF);
+        }
+        if (MagicDataRules.isSkill(entry)) {
+            return ApplyResult.fail(HINT_SKILL_LEARNED);
+        }
+        int target = selectedLevel <= LEVEL_BEGINNER
+                ? entry.level() : clampLevel(selectedLevel);
+        return new ApplyResult(true, HINT_NONE, false, target);
+    }
+
     // ------------------------------------------------------------------
     // 学新内容 / 学新模式（含证明模拟）
     // ------------------------------------------------------------------
@@ -443,7 +454,7 @@ public final class LecternRules {
      * 模拟后满足就允许学，同时返回需要升级的条目（菜单据此消耗证明）。</p>
      */
     public static LearnResult canLearn(CertData cert, MagicType type, CastMode mode, CastSubMode sub,
-                                       ProofRef proof, boolean creative, int selectedLevel) {
+                                       ProofRef proof) {
         if (cert == null || type == null || mode == null) {
             return LearnResult.fail(HINT_NO_TYPE);
         }
@@ -451,7 +462,7 @@ public final class LecternRules {
         if (MagicDataRules.findEntry(cert, type.id(), mode.id(), subId).isPresent()) {
             return LearnResult.fail(HINT_ALREADY_LEARNED);
         }
-        int newLevel = entryLevel(type, mode, sub, creative, selectedLevel);
+        int newLevel = entryLevel(type, mode, sub);
         CertEntry newEntry = new CertEntry(type.id(), mode.id(), subId, newLevel);
 
         if (mode == CastMode.POINT) {

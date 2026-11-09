@@ -70,7 +70,7 @@ public class EquipoiseOrbEntity extends AbstractStraightProjectile {
     private static final float CHARGED_BLOCK_EXPLOSION_RADIUS = 4.0F;
 
     /** 归零变体：命中实体伤害。 */
-    private static final float ZERO_RESET_ENTITY_DAMAGE = 2000.0F;
+    public static final float ZERO_RESET_ENTITY_DAMAGE = 2000.0F;
 
     /** 变体（同步到客户端，渲染器据此选择贴图）。 */
     private static final EntityDataAccessor<Integer> DATA_VARIANT =

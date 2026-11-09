@@ -1,0 +1,8 @@
+{
+    "textures":  {
+                     "bottom":  "mugewrayce-mod:block/advanced_magic_study_lectern_bottom",
+                     "top":  "mugewrayce-mod:block/advanced_magic_study_lectern_top",
+                     "side":  "mugewrayce-mod:block/advanced_magic_study_lectern_side"
+                 },
+    "parent":  "minecraft:block/cube_bottom_top"
+}

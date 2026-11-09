@@ -17,7 +17,7 @@ import net.minecraft.core.component.DataComponentType;
  * {@code staff_selection_data} / {@code magic_book_data}。
  * W10 新增 {@code attachment_book_data}（附加书自身等级）；
  * W12 新增 {@code staff_selection_data} / {@code magic_book_data}。
- * W03 的 {@code w03_test_data} 保留到 W23 统一清理。</p>
+ * W03 的临时测试组件已在 W16 清理。</p>
  */
 public final class ModComponents {
 
@@ -89,13 +89,6 @@ public final class ModComponents {
             DataComponentType.<MagicBookData>builder()
                     .persistent(MagicBookData.CODEC)
                     .networkSynchronized(MagicBookData.STREAM_CODEC)
-                    .build();
-
-    /** W03 临时测试组件（接口约定 §2.2，W23 清理）。 */
-    public static final DataComponentType<W03TestData> W03_TEST_DATA =
-            DataComponentType.<W03TestData>builder()
-                    .persistent(W03TestData.CODEC)
-                    .networkSynchronized(W03TestData.STREAM_CODEC)
                     .build();
 
     private ModComponents() {

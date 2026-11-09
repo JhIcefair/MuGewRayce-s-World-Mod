@@ -2,6 +2,7 @@ package com.mugewrayce.sizeadjuster.payload;
 
 import com.mugewrayce.sizeadjuster.SizeAdjusterMod;
 import com.mugewrayce.sizeadjuster.item.MagicItems;
+import com.mugewrayce.sizeadjuster.magic.SoundFx;
 import com.mugewrayce.sizeadjuster.util.ComponentSync;
 import com.mugewrayce.sizeadjuster.util.PlayerRoles;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
@@ -12,6 +13,7 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.item.ItemStack;
 
 /**
@@ -62,6 +64,7 @@ public record LifeMigrationPayload(int role) implements CustomPacketPayload {
             PlayerRoles.applyRole(player, role);
             stack.shrink(1);
             ComponentSync.markChanged(player);
+            SoundFx.at(player, SoundEvents.SOUL_SAND_PLACE, 0.9F, 1.0F);
             ServerPlayNetworking.send(player, new RoleStatusPayload(PlayerRoles.getRole(player)));
         });
     }

@@ -1,11 +1,22 @@
 package com.mugewrayce.sizeadjuster.item;
 
 import com.mugewrayce.sizeadjuster.clientbridge.ScreenOpenerHolder;
+import com.mugewrayce.sizeadjuster.component.CertData;
+import com.mugewrayce.sizeadjuster.component.ModComponents;
+import com.mugewrayce.sizeadjuster.magic.CertLines;
+import com.mugewrayce.sizeadjuster.magic.MagicDataRules;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.level.Level;
+
+import java.util.Locale;
+import java.util.function.Consumer;
 
 /**
  * 魔法学习证（W12）：右键在客户端打开只读学习证界面。
@@ -25,5 +36,28 @@ public class MagicStudyCertificateItem extends Item {
             ScreenOpenerHolder.openStudyCert();
         }
         return InteractionResult.SUCCESS;
+    }
+
+    @Override
+    public void appendHoverText(ItemStack stack, Item.TooltipContext context, TooltipDisplay display,
+                                Consumer<Component> tooltip, TooltipFlag flag) {
+        super.appendHoverText(stack, context, display, tooltip, flag);
+        CertData cert = stack.get(ModComponents.CERT_DATA);
+        if (!MagicDataRules.isValidCert(cert)) {
+            tooltip.accept(Component.translatable(
+                    "gui.mugewrayce-mod.magic_study_certificate.invalid"));
+            return;
+        }
+        tooltip.accept(Component.translatable(
+                "gui.mugewrayce-mod.magic_study_certificate.number",
+                String.format(Locale.ROOT, "%04d", cert.no())));
+        int shown = Math.min(6, cert.entries().size());
+        for (int i = 0; i < shown; i++) {
+            tooltip.accept(CertLines.describe(cert.entries().get(i)));
+        }
+        if (cert.entries().size() > shown) {
+            tooltip.accept(Component.translatable("tooltip.mugewrayce-mod.more",
+                    cert.entries().size() - shown));
+        }
     }
 }

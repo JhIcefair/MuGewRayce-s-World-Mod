@@ -3,14 +3,21 @@ package com.mugewrayce.sizeadjuster.item;
 import com.mugewrayce.sizeadjuster.component.ModComponents;
 import com.mugewrayce.sizeadjuster.component.StaffData;
 import com.mugewrayce.sizeadjuster.component.StaffSelectionData;
+import com.mugewrayce.sizeadjuster.magic.CertLines;
 import com.mugewrayce.sizeadjuster.magic.cast.StaffCaster;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.level.Level;
+
+import java.util.Locale;
+import java.util.function.Consumer;
 
 /**
  * 普通魔法杖（W08 注册 / W12 当前选择组件 / W14b 施法）。
@@ -47,5 +54,32 @@ public class MagicStaffItem extends Item {
     @Override
     public boolean releaseUsing(ItemStack stack, Level level, LivingEntity entity, int timeLeft) {
         return StaffCaster.releaseUsing(level, entity, stack, timeLeft);
+    }
+
+    @Override
+    public void appendHoverText(ItemStack stack, Item.TooltipContext context, TooltipDisplay display,
+                                Consumer<Component> tooltip, TooltipFlag flag) {
+        super.appendHoverText(stack, context, display, tooltip, flag);
+        StaffData staff = stack.getOrDefault(ModComponents.STAFF_DATA, StaffData.DEFAULT);
+        if (staff.boundCertNo() > 0) {
+            tooltip.accept(Component.translatable("tooltip.mugewrayce-mod.magic_staff.bound",
+                    String.format(Locale.ROOT, "%04d", staff.boundCertNo())));
+        } else {
+            tooltip.accept(Component.translatable("tooltip.mugewrayce-mod.magic_staff.unbound"));
+        }
+        if (staff.entries().isEmpty()) {
+            tooltip.accept(Component.translatable("tooltip.mugewrayce-mod.magic_staff.empty"));
+            return;
+        }
+        tooltip.accept(Component.translatable("tooltip.mugewrayce-mod.magic_staff.attachments",
+                staff.entries().size()));
+        int shown = Math.min(4, staff.entries().size());
+        for (int i = 0; i < shown; i++) {
+            tooltip.accept(CertLines.describe(staff.entries().get(i)));
+        }
+        if (staff.entries().size() > shown) {
+            tooltip.accept(Component.translatable("tooltip.mugewrayce-mod.more",
+                    staff.entries().size() - shown));
+        }
     }
 }

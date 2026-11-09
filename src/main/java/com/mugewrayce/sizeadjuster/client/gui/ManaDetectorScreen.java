@@ -145,23 +145,36 @@ public class ManaDetectorScreen extends Screen {
                     cx, this.height / 2 - 84, 0xFF55FF55);
         }
 
-        int gridTop = this.height / 2 - 64;
+        int gridTop = this.height / 2 - 76;
         int buttonTop = this.height / 2 + 84;
-        int cellByHeight = Math.max(20, (buttonTop - 12 - gridTop) / GRID);
-        int cellByWidth = Math.max(20, (this.width - 40) / GRID);
-        int cell = Math.min(56, Math.min(cellByHeight, cellByWidth));
-        int startX = (this.width - cell * GRID) / 2;
-        int startY = gridTop;
+        int minCell = this.font.width("99999") + 12;
+        int cellByHeight = Math.max(1, (buttonTop - 12 - gridTop) / GRID);
+        int cellByWidth = Math.max(1, (this.width - 40) / GRID);
+        int cell = Math.max(minCell, Math.min(64, Math.min(cellByHeight, cellByWidth)));
+        int availableW = Math.max(1, this.width - 16);
+        int availableH = Math.max(1, buttonTop - 12 - gridTop);
+        float scale = Math.min(1.0F, Math.min(
+                (float) availableW / (cell * GRID),
+                (float) availableH / (cell * GRID)));
+        float gridW = cell * GRID * scale;
+        float gridH = cell * GRID * scale;
+        float startX = (this.width - gridW) / 2.0F;
+        float startY = gridTop + (availableH - gridH) / 2.0F;
+
+        graphics.pose().pushMatrix();
+        graphics.pose().translate(startX, startY);
+        graphics.pose().scale(scale, scale);
         for (int row = 0; row < GRID; row++) {
             for (int col = 0; col < GRID; col++) {
                 int index = row * GRID + col;
                 int value = this.values[index];
                 String text = value < 0 ? "--" : Integer.toString(value);
                 graphics.centeredText(this.font, Component.literal(text),
-                        startX + col * cell + cell / 2,
-                        startY + row * cell + cell / 2,
+                        col * cell + cell / 2,
+                        row * cell + cell / 2,
                         0xFFFFFFFF);
             }
         }
+        graphics.pose().popMatrix();
     }
 }

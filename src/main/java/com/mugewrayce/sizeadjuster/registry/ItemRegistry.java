@@ -35,4 +35,16 @@ public final class ItemRegistry {
                 Identifier.fromNamespaceAndPath(SizeAdjusterMod.MOD_ID, id));
         return Registry.register(BuiltInRegistries.ITEM, key, factory.apply(new Item.Properties().setId(key)));
     }
+
+    /**
+     * 方块物品专用：26.1 的 {@code BlockItem} 不再自动套 {@code block.} 前缀，
+     * 必须显式 {@code useBlockDescriptionPrefix()}，否则 tooltip 显示 {@code item.*} 原始键。
+     */
+    public static Item registerBlockItem(String id, Function<Item.Properties, Item> factory) {
+        ResourceKey<Item> key = ResourceKey.create(
+                Registries.ITEM,
+                Identifier.fromNamespaceAndPath(SizeAdjusterMod.MOD_ID, id));
+        return Registry.register(BuiltInRegistries.ITEM, key,
+                factory.apply(new Item.Properties().setId(key).useBlockDescriptionPrefix()));
+    }
 }

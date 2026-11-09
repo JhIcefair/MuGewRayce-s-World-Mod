@@ -36,6 +36,8 @@ public final class MenuRegistry {
         Objects.requireNonNull(MagicAggregationTableMenu.TYPE, "magic_aggregation_table MenuType");
         Objects.requireNonNull(MagicAttachmentTableMenu.TYPE, "magic_attachment_table MenuType");
         Objects.requireNonNull(MagicStudyLecternMenu.TYPE, "magic_study_lectern MenuType");
+        Objects.requireNonNull(MagicStudyLecternMenu.ADVANCED_TYPE,
+                "advanced_magic_study_lectern MenuType");
     }
 
     /**

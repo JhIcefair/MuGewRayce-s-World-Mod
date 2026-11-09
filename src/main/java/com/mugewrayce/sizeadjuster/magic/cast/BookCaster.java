@@ -2,10 +2,12 @@ package com.mugewrayce.sizeadjuster.magic.cast;
 
 import com.mugewrayce.sizeadjuster.component.MagicBookData;
 import com.mugewrayce.sizeadjuster.magic.MagicNumbers;
+import com.mugewrayce.sizeadjuster.magic.SoundFx;
 import com.mugewrayce.sizeadjuster.magic.mana.ManaService;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -51,7 +53,11 @@ public final class BookCaster {
         if (!pay(player, cost)) {
             return false;
         }
-        return TimePauseZone.start(player.level(), player, data.range(), data.excluded());
+        boolean started = TimePauseZone.start(player.level(), player, data.range(), data.excluded());
+        if (started) {
+            SoundFx.at(player, SoundEvents.CONDUIT_DEACTIVATE, 1.0F, 0.8F);
+        }
+        return started;
     }
 
     private static boolean castTeleport(ServerPlayer player, MagicBookData data) {
@@ -66,6 +72,7 @@ public final class BookCaster {
             return false;
         }
         teleportEntities(level, player, data.range(), targetX, targetY, targetZ);
+        SoundFx.at(player, SoundEvents.ENDERMAN_TELEPORT, 1.0F, 1.0F);
         return true;
     }
 

@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=south": { "model": "mugewrayce-mod:block/advanced_magic_study_lectern" },
+    "facing=west": { "model": "mugewrayce-mod:block/advanced_magic_study_lectern", "y": 90 },
+    "facing=north": { "model": "mugewrayce-mod:block/advanced_magic_study_lectern", "y": 180 },
+    "facing=east": { "model": "mugewrayce-mod:block/advanced_magic_study_lectern", "y": 270 }
+  }
+}

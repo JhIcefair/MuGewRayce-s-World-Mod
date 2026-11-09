@@ -1,8 +1,8 @@
 {
   "variants": {
-    "facing=north": { "model": "mugewrayce-mod:block/magic_aggregation_table" },
-    "facing=east": { "model": "mugewrayce-mod:block/magic_aggregation_table", "y": 90 },
-    "facing=south": { "model": "mugewrayce-mod:block/magic_aggregation_table", "y": 180 },
-    "facing=west": { "model": "mugewrayce-mod:block/magic_aggregation_table", "y": 270 }
+    "facing=south": { "model": "mugewrayce-mod:block/magic_aggregation_table" },
+    "facing=west": { "model": "mugewrayce-mod:block/magic_aggregation_table", "y": 90 },
+    "facing=north": { "model": "mugewrayce-mod:block/magic_aggregation_table", "y": 180 },
+    "facing=east": { "model": "mugewrayce-mod:block/magic_aggregation_table", "y": 270 }
   }
 }

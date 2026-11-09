@@ -8,7 +8,6 @@ import com.mugewrayce.sizeadjuster.client.particle.MagicParticleProvider;
 import net.fabricmc.fabric.api.client.particle.v1.ParticleProviderRegistry;
 import com.mugewrayce.sizeadjuster.component.MagicBookData;
 import com.mugewrayce.sizeadjuster.component.ModComponents;
-import com.mugewrayce.sizeadjuster.client.network.W04TestClient;
 import com.mugewrayce.sizeadjuster.client.gui.EquipoiseStaffScreen;
 import com.mugewrayce.sizeadjuster.client.gui.LifeMigrationScreen;
 import com.mugewrayce.sizeadjuster.client.gui.MagicAggregationTableScreen;
@@ -153,9 +152,6 @@ public class MuGewRayceModClient implements ClientModInitializer {
         // W12 综合设置按键（i）：按主手物品分发
         settingsKey = registerSwitchKey("key.mugewrayce.settings", GLFW.GLFW_KEY_I, category);
 
-        // 2.0.0 网络骨架（W04，临时）：S2C 状态接收 + 客户端测试命令（W23 清理）
-        W04TestClient.register();
-
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             for (int direction = 0; direction < SWITCH_KEYS.length; direction++) {
                 while (SWITCH_KEYS[direction].consumeClick()) {
@@ -261,6 +257,12 @@ public class MuGewRayceModClient implements ClientModInitializer {
                 (MenuScreens.ScreenConstructor<MagicStudyLecternMenu, MagicStudyLecternScreen>)
                         (menu, inventory, title) -> new MagicStudyLecternScreen(menu, inventory, title));
 
+        // W16：高级魔法学习讲台 GUI（同一屏幕，高级皮肤）
+        MenuScreens.register(MagicStudyLecternMenu.ADVANCED_TYPE,
+                (MenuScreens.ScreenConstructor<MagicStudyLecternMenu, MagicStudyLecternScreen>)
+                        (menu, inventory, title) -> new MagicStudyLecternScreen(menu, inventory, title,
+                                MagicStudyLecternScreen.LecternSkin.ADVANCED));
+
         // 预注册 GUI 贴图：客户端完全启动后同步加载
         // （注意：onInitializeClient 在 Minecraft.<init> 期间执行，getTextureManager() 尚为 null）
         ClientLifecycleEvents.CLIENT_STARTED.register(client -> {
@@ -283,6 +285,16 @@ public class MuGewRayceModClient implements ClientModInitializer {
             registerGuiTexture(client, MagicStudyLecternScreen.SMALL_NORMAL);
             registerGuiTexture(client, MagicStudyLecternScreen.SMALL_PRESSED);
             registerGuiTexture(client, MagicStudyLecternScreen.SMALL_DISABLED);
+            registerGuiTexture(client, MagicStudyLecternScreen.ADVANCED_BACKGROUND);
+            registerGuiTexture(client, MagicStudyLecternScreen.ADVANCED_BIG_NORMAL);
+            registerGuiTexture(client, MagicStudyLecternScreen.ADVANCED_BIG_PRESSED);
+            registerGuiTexture(client, MagicStudyLecternScreen.ADVANCED_BIG_DISABLED);
+            registerGuiTexture(client, MagicStudyLecternScreen.ADVANCED_MID_NORMAL);
+            registerGuiTexture(client, MagicStudyLecternScreen.ADVANCED_MID_PRESSED);
+            registerGuiTexture(client, MagicStudyLecternScreen.ADVANCED_MID_DISABLED);
+            registerGuiTexture(client, MagicStudyLecternScreen.ADVANCED_SMALL_NORMAL);
+            registerGuiTexture(client, MagicStudyLecternScreen.ADVANCED_SMALL_PRESSED);
+            registerGuiTexture(client, MagicStudyLecternScreen.ADVANCED_SMALL_DISABLED);
         });
     }
 
