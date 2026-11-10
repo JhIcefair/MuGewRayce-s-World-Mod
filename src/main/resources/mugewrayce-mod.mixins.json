@@ -8,7 +8,11 @@
     "TimePauseEntityMixin",
     "TimePauseLivingEntityMixin",
     "TimePauseLevelMixin",
-    "TimePauseServerLevelMixin"
+    "TimePauseServerLevelMixin",
+    "ProjectileHitOwnShieldMixin",
+    "ProjectileMagicHitMixin",
+    "MagicWeaponDamageMixin",
+    "ExamChestProtectionMixin"
   ],
   "injectors": {
     "defaultRequire": 1

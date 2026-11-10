@@ -391,7 +391,12 @@ public class MagicStudyLecternMenu extends AbstractModMenu {
         if (this.type == null || this.major == null || this.major == CastMode.SKILL) {
             return;
         }
-        int pages = LecternRules.subPageCount(this.type, this.major);
+        // W18：考试模式按 examSubsFor 的列表翻页（不含“普通防御”）
+        List<CastSubMode> subs = this.mode == MODE_EXAM
+                ? LecternRules.examSubsFor(this.type, this.major)
+                : LecternRules.subsFor(this.type, this.major);
+        int pages = Math.max(1,
+                (subs.size() + LecternRules.SUB_PAGE_SIZE - 1) / LecternRules.SUB_PAGE_SIZE);
         this.setSubPage(this.major, Math.floorMod(this.getSubPage(this.major) + delta, pages));
         this.hintCode = LecternRules.HINT_NONE;
     }
@@ -719,6 +724,12 @@ public class MagicStudyLecternMenu extends AbstractModMenu {
         if (this.type != null && !LecternRules.isLearnableType(this.type)) {
             this.type = null;
             this.clearSelections();
+            this.hintCode = LecternRules.HINT_NONE;
+        }
+        // W18：考试模式下“普通防御”不可选；切过来时若当前项非法就清空
+        if (this.mode == MODE_EXAM && this.sub != null && this.major != null
+                && !LecternRules.examSubsFor(this.type, this.major).contains(this.sub)) {
+            this.sub = null;
             this.hintCode = LecternRules.HINT_NONE;
         }
     }
