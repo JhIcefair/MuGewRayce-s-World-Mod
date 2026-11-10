@@ -191,10 +191,19 @@ public class EquipoiseFormationEntity extends Entity {
         return type == TYPE_DEFENSE || type == TYPE_ICEFAIR_SHIELD || type == TYPE_MAGIC_DEFENSE;
     }
 
+    /** 该实体是否是本阵的主人（W18：主人的投射物不被自己的阵反弹）。 */
+    public boolean isOwner(Entity entity) {
+        return entity != null && this.ownerUuid != null && this.ownerUuid.equals(entity.getUUID());
+    }
+
     /** 防御阵 / icefair 自动防御阵反弹投射物（原版盾牌式反弹：反转方向 + 随机转角）；
-     *  icefair 自动防御阵每次抵挡（反弹）视为一次受击，重置其 3 秒倒计时（环形则整体重置）。 */
+     *  icefair 自动防御阵每次抵挡（反弹）视为一次受击，重置其 3 秒倒计时（环形则整体重置）。
+     *  W18：主人的投射物直接穿透（不反弹、不重置寿命）。 */
     @Override
     public ProjectileDeflection deflection(Projectile projectile) {
+        if (this.isOwner(projectile.getOwner())) {
+            return ProjectileDeflection.NONE;
+        }
         int type = this.getFormationType();
         if (type == TYPE_DEFENSE || type == TYPE_MAGIC_DEFENSE) {
             return ProjectileDeflection.AIM_DEFLECT;

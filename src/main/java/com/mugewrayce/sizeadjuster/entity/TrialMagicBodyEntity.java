@@ -9,7 +9,9 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.entity.ai.goal.RandomStrollGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.ai.targeting.TargetingConditions;
 import net.minecraft.world.entity.monster.Monster;
@@ -57,7 +59,7 @@ public class TrialMagicBodyEntity extends AbstractMagicBodyEntity {
     public static AttributeSupplier.Builder createAttributes() {
         return Monster.createMonsterAttributes()
                 .add(Attributes.MAX_HEALTH, 20.0)
-                .add(Attributes.MOVEMENT_SPEED, 0.0)
+                .add(Attributes.MOVEMENT_SPEED, 0.25)
                 .add(Attributes.FOLLOW_RANGE, 32.0)
                 .add(Attributes.SCALE, 1.0);
     }
@@ -103,7 +105,11 @@ public class TrialMagicBodyEntity extends AbstractMagicBodyEntity {
             return;
         }
         this.goalsInstalled = true;
+        // W18：有 AI 的试炼体会靠近目标 / 无目标时游走；TrialCastGoal 只管 LOOK，两者不冲突
+        this.goalSelector.addGoal(0, new FloatGoal(this));
         this.goalSelector.addGoal(1, new TrialCastGoal(this));
+        this.goalSelector.addGoal(2, new ApproachTargetGoal(this));
+        this.goalSelector.addGoal(3, new RandomStrollGoal(this, 0.8D));
         if (this.attackPlayers) {
             // 只锁发起者：Selector 第二个参数是服务端世界
             this.targetSelector.addGoal(1, new NearestAttackableTargetGoal<>(this, Player.class, false,
@@ -232,6 +238,57 @@ public class TrialMagicBodyEntity extends AbstractMagicBodyEntity {
             return UUID.fromString(value);
         } catch (IllegalArgumentException e) {
             return null;
+        }
+    }
+
+    /** W18：有 AI 时靠近当前目标（16 格内、距离 >3 格时寻路，每 10 tick 重算）。 */
+    private static final class ApproachTargetGoal extends Goal {
+
+        private static final double SEARCH_RANGE = 16.0D;
+        private static final double KEEP_DISTANCE = 3.0D;
+
+        private final TrialMagicBodyEntity body;
+        private int recalcTicks;
+
+        private ApproachTargetGoal(TrialMagicBodyEntity body) {
+            this.body = body;
+            this.setFlags(EnumSet.of(Goal.Flag.MOVE));
+        }
+
+        @Override
+        public boolean canUse() {
+            if (!this.body.examAi) {
+                return false;
+            }
+            LivingEntity target = this.body.resolveCastTarget();
+            if (target == null) {
+                return false;
+            }
+            double distanceSqr = this.body.distanceToSqr(target);
+            return distanceSqr <= SEARCH_RANGE * SEARCH_RANGE
+                    && distanceSqr > KEEP_DISTANCE * KEEP_DISTANCE;
+        }
+
+        @Override
+        public boolean canContinueToUse() {
+            return this.canUse();
+        }
+
+        @Override
+        public void start() {
+            this.recalcTicks = 0;
+        }
+
+        @Override
+        public void tick() {
+            LivingEntity target = this.body.resolveCastTarget();
+            if (target == null) {
+                return;
+            }
+            if (this.recalcTicks-- <= 0) {
+                this.recalcTicks = 10;
+                this.body.getNavigation().moveTo(target, 1.0D);
+            }
         }
     }
 

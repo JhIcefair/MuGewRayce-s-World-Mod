@@ -1,5 +1,6 @@
 package com.mugewrayce.sizeadjuster.item;
 
+import com.mugewrayce.sizeadjuster.magic.MagicArrows;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -8,6 +9,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.item.BowItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -31,6 +33,21 @@ public class EquipoiseBowItem extends BowItem {
         // 原版 use() 在背包无箭时直接返回 FAIL，这里跳过该检查
         player.startUsingItem(hand);
         return InteractionResult.CONSUME;
+    }
+
+    /**
+     * W18：给圣弓发出的箭打“魔法箭”标记（不改伤害数值 / 蓄力 / 附魔 / 耐久）。
+     *
+     * <p>原版 {@code shoot(...)} 内部通过本方法建箭，这里只做标记，
+     * 后续由 {@code MagicWeaponDamageMixin} 换成魔法伤害、由
+     * {@code ProjectileMagicHitMixin} 放行魔法体。</p>
+     */
+    @Override
+    protected Projectile createProjectile(Level level, LivingEntity shooter, ItemStack weapon,
+                                          ItemStack ammo, boolean isCrit) {
+        Projectile projectile = super.createProjectile(level, shooter, weapon, ammo, isCrit);
+        MagicArrows.mark(projectile);
+        return projectile;
     }
 
     @Override

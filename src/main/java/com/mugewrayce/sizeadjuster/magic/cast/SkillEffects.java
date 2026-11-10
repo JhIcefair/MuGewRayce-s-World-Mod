@@ -121,7 +121,8 @@ public final class SkillEffects {
         }
         BlockPos pos = hit.getBlockPos();
         List<LivingEntity> entities = level.getEntitiesOfClass(LivingEntity.class,
-                new AABB(pos).inflate(FREEZE_ENTITY_RADIUS), LivingEntity::isAlive);
+                new AABB(pos).inflate(FREEZE_ENTITY_RADIUS), // W18：不冻结施法者自己
+                entity -> entity != null && entity.isAlive() && entity != player);
         boolean blockFreezable = level.getBlockState(pos).is(Blocks.WATER)
                 || level.getBlockState(pos).is(Blocks.ICE)
                 || level.getBlockState(pos).is(Blocks.PACKED_ICE);

@@ -52,12 +52,15 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.storage.TagValueInput;
 import net.minecraft.world.level.storage.TagValueOutput;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -93,6 +96,8 @@ public final class ExamManager {
     private static final Map<String, Active> ACTIVE = new LinkedHashMap<>();
     private static final Map<String, Integer> FORCED = new HashMap<>();
     private static final List<PendingResult> PENDING = new ArrayList<>();
+    /** W18：激活中的奖励箱（维度 → 位置集合），供方块保护 mixin 查询。 */
+    private static final Map<ResourceKey<Level>, Set<BlockPos>> PROTECTED_CHESTS = new HashMap<>();
     private static boolean restored;
 
     private ExamManager() {
@@ -184,7 +189,38 @@ public final class ExamManager {
         ACTIVE.clear();
         FORCED.clear();
         PENDING.clear();
+        PROTECTED_CHESTS.clear();
         restored = false;
+    }
+
+    // ------------------------------------------------------------------
+    // W18：奖励箱保护（防非玩家方块移除）
+    // ------------------------------------------------------------------
+
+    private static void protectChest(ServerLevel level, BlockPos pos) {
+        PROTECTED_CHESTS.computeIfAbsent(level.dimension(), key -> new HashSet<>())
+                .add(pos.immutable());
+    }
+
+    /** 解除登记；考试自己撤箱前必须先调用，否则会被保护逻辑挡住。 */
+    private static void unprotectChest(ServerLevel level, BlockPos pos) {
+        Set<BlockPos> set = PROTECTED_CHESTS.get(level.dimension());
+        if (set == null) {
+            return;
+        }
+        set.remove(pos);
+        if (set.isEmpty()) {
+            PROTECTED_CHESTS.remove(level.dimension());
+        }
+    }
+
+    /** 该位置是否是激活中的考试奖励箱（{@code ExamChestProtectionMixin} 查询用）。 */
+    public static boolean isProtectedChest(Level level, BlockPos pos) {
+        if (level == null || pos == null) {
+            return false;
+        }
+        Set<BlockPos> set = PROTECTED_CHESTS.get(level.dimension());
+        return set != null && set.contains(pos);
     }
 
     // ------------------------------------------------------------------
@@ -239,6 +275,7 @@ public final class ExamManager {
         boolean missingBodies = active.spec.spawnBodyCount() > 0 && active.spawnedBodies == 0;
         if (missingPigs || missingBodies) {
             // 目标没生成出来：撤掉刚放的箱子，申请书不消耗（与 D-1 同一原则）
+            unprotectChest(level, chestPos);
             level.setBlock(chestPos, Blocks.AIR.defaultBlockState(), 3);
             for (UUID target : active.targets) {
                 Entity entity = level.getEntity(target);
@@ -253,6 +290,8 @@ public final class ExamManager {
         forceChunks(level, active.centerChunk);
         active.displayId = spawnTextDisplay(level, active);
 
+        // W18：开考成功后才登记奖励箱保护（失败撤箱路径已在上面先解除）
+        protectChest(level, chestPos);
         ACTIVE.put(id, active);
         if (spec.kind() == ExamSpec.Kind.SELF_HEAL) {
             // 对己治疗 I：强制扣到 50%，考试期间禁止自然回血（§6 坑 9）
@@ -585,10 +624,37 @@ public final class ExamManager {
             boolean outside = Math.abs(chunk.x() - active.centerChunk.x()) > 1
                     || Math.abs(chunk.z() - active.centerChunk.z()) > 1;
             if (outside) {
-                entity.teleportTo(active.rightClickPos.getX() + 0.5D,
-                        active.rightClickPos.getY(), active.rightClickPos.getZ() + 0.5D);
+                // W18：越界回到奖励箱附近的安全落脚点，而不是当初右键的位置
+                Vec3 landing = safeLanding(active.level, active.chestPos);
+                entity.teleportTo(landing.x, landing.y, landing.z);
+                entity.resetFallDistance();
+                entity.setDeltaMovement(Vec3.ZERO);
             }
         }
+    }
+
+    /** 优先箱子正上方；上方被堵时依次看四邻；都不行回正上方兜底。 */
+    private static Vec3 safeLanding(ServerLevel level, BlockPos chestPos) {
+        BlockPos above = chestPos.above();
+        if (isStandable(level, above)) {
+            return Vec3.atBottomCenterOf(above);
+        }
+        for (Direction direction : Direction.Plane.HORIZONTAL) {
+            BlockPos candidate = chestPos.relative(direction).above();
+            if (isStandable(level, candidate)) {
+                return Vec3.atBottomCenterOf(candidate);
+            }
+        }
+        return Vec3.atBottomCenterOf(above);
+    }
+
+    /** 落脚点：脚与头两格空气，且脚下是实体方块。 */
+    private static boolean isStandable(ServerLevel level, BlockPos feet) {
+        BlockPos head = feet.above();
+        if (!level.getBlockState(feet).isAir() || !level.getBlockState(head).isAir()) {
+            return false;
+        }
+        return level.getBlockState(feet.below()).isFaceSturdy(level, feet.below(), Direction.UP);
     }
 
     private static void suppressNaturalRegen(Active active) {
@@ -656,6 +722,8 @@ public final class ExamManager {
         discardTargets(active);
         releaseChunks(active.level, active.centerChunk);
         restoreSaturation(active);
+        // W18：考试结束解除奖励箱保护（箱子留作奖励箱，玩家可正常取用/破坏）
+        unprotectChest(active.level, active.chestPos);
         ACTIVE.remove(active.id);
         save(server);
     }
@@ -783,6 +851,8 @@ public final class ExamManager {
                 continue;
             }
             kept.add(active);
+            // W18：重启恢复后重新登记奖励箱保护
+            protectChest(level, session.chestPos());
         }
         // 用“保留的会话目标”做白名单，清掉孤儿考试实体与全部旧世界文字
         List<UUID> known = new ArrayList<>();

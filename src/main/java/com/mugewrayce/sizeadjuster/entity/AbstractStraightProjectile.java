@@ -47,6 +47,10 @@ public abstract class AbstractStraightProjectile extends Projectile {
      */
     @Override
     protected boolean canHitEntity(Entity target) {
+        // W18：主人的投射物不命中自己的防御阵（否则自动防御时会被自己面前的阵挡下并反弹）
+        if (target instanceof EquipoiseFormationEntity formation && formation.isOwner(this.getOwner())) {
+            return false;
+        }
         if (super.canHitEntity(target)) {
             return true;
         }

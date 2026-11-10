@@ -359,7 +359,10 @@ public class MagicStudyLecternScreen extends AbstractModScreen<MagicStudyLectern
 
         boolean skillRow = block2 && major == CastMode.SKILL;
         boolean subRow = block2 && major != null && major != CastMode.SKILL;
-        List<CastSubMode> subs = subRow ? LecternRules.subsFor(type, major) : List.of();
+        // W18：考试模式只列 examSubsFor（不含“普通防御”），翻页数按同一列表算
+        List<CastSubMode> subs = subRow
+                ? (exam ? LecternRules.examSubsFor(type, major) : LecternRules.subsFor(type, major))
+                : List.of();
         List<MagicSkill> skills = skillRow ? LecternRules.skillsFor(type) : List.of();
         int subPage = subRow ? this.menu.getSubPage(major) : 0;
         for (int i = 0; i < this.subButtons.length; i++) {
@@ -385,7 +388,10 @@ public class MagicStudyLecternScreen extends AbstractModScreen<MagicStudyLectern
         this.subPrevButton.visible = subRow;
         this.subNextButton.visible = subRow;
         if (subRow) {
-            boolean single = LecternRules.subPageCount(type, major) <= 1;
+            // W18：用与按钮相同的列表算页数（考试模式不含“普通防御”）
+            int pages = Math.max(1, (subs.size() + LecternRules.SUB_PAGE_SIZE - 1)
+                    / LecternRules.SUB_PAGE_SIZE);
+            boolean single = pages <= 1;
             if (single) {
                 this.subPrevButton.setUnavailable(Component.empty());
                 this.subNextButton.setUnavailable(Component.empty());

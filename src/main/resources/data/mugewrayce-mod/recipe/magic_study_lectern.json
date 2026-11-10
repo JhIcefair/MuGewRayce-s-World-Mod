@@ -7,9 +7,9 @@
     "Y": "minecraft:diamond"
   },
   "pattern": [
-    "# A #",
-    "# B #",
-    "Y Y Y"
+    " A ",
+    " B ",
+    "YYY"
   ],
   "result": { "id": "mugewrayce-mod:magic_study_lectern" }
 }

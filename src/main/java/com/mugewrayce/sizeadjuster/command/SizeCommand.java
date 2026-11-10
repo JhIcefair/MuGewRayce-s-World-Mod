@@ -95,6 +95,8 @@ public class SizeCommand {
             )
             // 2.0.0 物品指令获取入口（草案 §14.9）：/mugewrayce itemgive <id> [数量] [目标]
             .then(ItemCommand.branch())
+            // W18：召唤没有生命的魔法体：/mugewrayce summon lifeless_magic_body [数量] [目标]
+            .then(SummonCommand.branch())
         );
     }
 
