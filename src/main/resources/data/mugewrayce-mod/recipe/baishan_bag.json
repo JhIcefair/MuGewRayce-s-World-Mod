@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "S": "minecraft:string",
+    "C": "#minecraft:wool_carpets",
+    "X": "minecraft:chest"
+  },
+  "pattern": [
+    "SCS",
+    "CXC",
+    "SCS"
+  ],
+  "result": { "id": "mugewrayce-mod:baishan_bag" }
+}
