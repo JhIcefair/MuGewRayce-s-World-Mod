@@ -55,8 +55,13 @@ public final class StaffCaster {
     private static final int SECOND_TICKS = 20;
     private static final double REACH = 64.0D;
 
+    /** W18：点式 / 魔法阵的蓄力阈值（tick，与净化法杖一致）。 */
+    private static final int CHARGE_TICKS = 10;
+
     private static final Map<UUID, SustainedState> SUSTAINED = new HashMap<>();
     private static final Map<UUID, MagicFormationEntity> DEFENSES = new HashMap<>();
+    /** W18：点式 / 非防御魔法阵的蓄力状态（服务端按玩家记录）。 */
+    private static final Map<UUID, ChargeState> CHARGES = new HashMap<>();
 
     private StaffCaster() {
     }
@@ -69,7 +74,7 @@ public final class StaffCaster {
         if (!(level instanceof ServerLevel serverLevel)
                 || !(player instanceof ServerPlayer serverPlayer)) {
             // 客户端也要进入“使用中”，否则 onUseTick / 使用动画不会走
-            if (selection.isHold()) {
+            if (selection.isHold() || selection.isCharging()) {
                 player.startUsingItem(hand);
                 return InteractionResult.CONSUME;
             }
@@ -101,6 +106,14 @@ public final class StaffCaster {
             plan.action().run();
             return InteractionResult.SUCCESS;
         }
+        if (selection.isCharging()) {
+            // W18：点式 / 非防御魔法阵改为“按下进入蓄力，松手结算”；
+            // 单击与长按的分流在 releaseUsing 里按 hold 的 tick 数判定。
+            CHARGES.remove(player.getUUID());
+            CHARGES.put(player.getUUID(), new ChargeState(selection));
+            player.startUsingItem(hand);
+            return InteractionResult.CONSUME;
+        }
         if (!tryPay(serverPlayer, selection.startCost(), false)) {
             return InteractionResult.SUCCESS;
         }
@@ -110,6 +123,16 @@ public final class StaffCaster {
 
     public static void onUseTick(Level level, LivingEntity entity, ItemStack stack, int remainingUseDuration) {
         if (!(level instanceof ServerLevel serverLevel) || !(entity instanceof ServerPlayer player)) {
+            return;
+        }
+        ChargeState charge = CHARGES.get(player.getUUID());
+        if (charge != null) {
+            // W18：蓄力满 10 tick 播一次“充能完成”音效；不重复发射
+            int held = stack.getUseDuration(player) - remainingUseDuration;
+            if (held >= CHARGE_TICKS && !charge.notified) {
+                charge.notified = true;
+                SoundFx.at(player, SoundEvents.AMETHYST_BLOCK_RESONATE, 0.6F, 1.5F);
+            }
             return;
         }
         SustainedState sustained = SUSTAINED.get(player.getUUID());
@@ -124,19 +147,72 @@ public final class StaffCaster {
     }
 
     public static boolean releaseUsing(Level level, LivingEntity entity, ItemStack stack, int timeLeft) {
-        if (entity instanceof ServerPlayer player) {
-            SUSTAINED.remove(player.getUUID());
-            MagicFormationEntity defense = DEFENSES.remove(player.getUUID());
-            if (defense != null && defense.isAlive()) {
-                EquipoiseFormationEntity.deactivateDefense(player.getUUID());
-                defense.discard();
+        if (!(entity instanceof ServerPlayer player)) {
+            return true;
+        }
+        if (level instanceof ServerLevel serverLevel) {
+            ChargeState charge = CHARGES.remove(player.getUUID());
+            if (charge != null) {
+                // W18：按住时长 = 总时长 − 剩余时长（不受释放时序影响）
+                int held = stack.getUseDuration(player) - timeLeft;
+                resolveCharge(serverLevel, player, charge.selection, held);
+                return true;
             }
+        }
+        SUSTAINED.remove(player.getUUID());
+        MagicFormationEntity defense = DEFENSES.remove(player.getUUID());
+        if (defense != null && defense.isAlive()) {
+            EquipoiseFormationEntity.deactivateDefense(player.getUUID());
+            defense.discard();
         }
         return true;
     }
 
+    /**
+     * W18：蓄力结算。
+     *
+     * <ul>
+     *   <li>点式：不足 10 tick 按原数值施放一发；满 10 tick 伤害 {@code ceil(base × 1.1)}。</li>
+     *   <li>魔法阵（非防御）：不足 10 tick 不生成、不扣魔；满 10 tick 生成并保留 30 秒。</li>
+     * </ul>
+     */
+    private static void resolveCharge(ServerLevel level, ServerPlayer player, Selection selection, int held) {
+        if (selection.mode() == CastMode.POINT) {
+            if (!tryPay(player, selection.startCost(), false)) {
+                return;
+            }
+            castPoint(level, player, selection, held >= CHARGE_TICKS);
+            return;
+        }
+        if (held < CHARGE_TICKS) {
+            return; // 魔法阵：点一下不生成，也不扣启动耗魔
+        }
+        if (!tryPay(player, selection.startCost(), false)) {
+            return;
+        }
+        spawnFormation(level, player, selection, false);
+        SoundFx.at(player, SoundEvents.AMETHYST_BLOCK_CHIME, 0.8F, 0.8F);
+    }
+
+    /** W18：点式一发（充能时伤害 +10%，向上取整）；治疗点式不加成。 */
+    private static void castPoint(ServerLevel level, ServerPlayer player, Selection selection, boolean charged) {
+        int color = MagicPalette.colorFor(selection.type());
+        SoundFx.at(player, SoundEvents.ILLUSIONER_CAST_SPELL, 0.7F, 1.2F);
+        if (selection.type() == MagicType.HEAL) {
+            spawnHealBolt(level, player, color, MagicBoltEntity.KIND_POINT,
+                    MagicNumbers.pointHeal(selection.level()), selection.level());
+            return;
+        }
+        float damage = MagicNumbers.pointDamage(selection.level());
+        if (charged) {
+            damage = (float) Math.ceil(damage * 1.1F);
+        }
+        spawnDamageBolt(level, player, color, MagicBoltEntity.KIND_POINT, damage, false);
+    }
+
     public static void clearPlayer(UUID playerId) {
         SUSTAINED.remove(playerId);
+        CHARGES.remove(playerId);
         MagicFormationEntity defense = DEFENSES.remove(playerId);
         if (defense != null && defense.isAlive()) {
             EquipoiseFormationEntity.deactivateDefense(playerId);
@@ -303,6 +379,7 @@ public final class StaffCaster {
     private static void stopUsing(ServerPlayer player) {
         player.stopUsingItem();
         SUSTAINED.remove(player.getUUID());
+        CHARGES.remove(player.getUUID());
         MagicFormationEntity defense = DEFENSES.remove(player.getUUID());
         if (defense != null && defense.isAlive()) {
             EquipoiseFormationEntity.deactivateDefense(player.getUUID());
@@ -420,6 +497,11 @@ public final class StaffCaster {
             return mode == CastMode.FORMATION && sub == CastSubMode.FORMATION_OUTWARD_DEFENSE;
         }
 
+        /** W18：点式与非防御魔法阵走“按住蓄力、松手结算”。 */
+        public boolean isCharging() {
+            return mode == CastMode.POINT || (mode == CastMode.FORMATION && !isDefense());
+        }
+
         public boolean isHold() {
             return isSustained() || isDefense();
         }
@@ -461,6 +543,16 @@ public final class StaffCaster {
                 return MagicNumbers.MANA_FORMATION_DEFENSE_PER_SECOND;
             }
             return 0;
+        }
+    }
+
+    /** W18：点式 / 魔法阵的蓄力状态。 */
+    private static final class ChargeState {
+        private final Selection selection;
+        private boolean notified;
+
+        private ChargeState(Selection selection) {
+            this.selection = selection;
         }
     }
 

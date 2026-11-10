@@ -23,7 +23,8 @@ import java.util.function.Consumer;
  * 普通魔法杖（W08 注册 / W12 当前选择组件 / W14b 施法）。
  *
  * <p>右键读 {@code staff_selection_data} + {@code staff_data.entries}，服务端校验后施法；
- * 耗魔走 {@code ManaService.tryConsume}。持续线式 / 普通防御为按住施法。</p>
+ * 耗魔走 {@code ManaService.tryConsume}。点式 / 非防御魔法阵为“按住蓄力、松手结算”（W18），
+ * 持续线式 / 普通防御为按住施法。</p>
  */
 public class MagicStaffItem extends Item {
 
