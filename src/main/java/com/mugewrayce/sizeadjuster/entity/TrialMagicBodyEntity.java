@@ -1,9 +1,12 @@
 package com.mugewrayce.sizeadjuster.entity;
 
+import com.mugewrayce.sizeadjuster.item.MagicItems;
 import com.mugewrayce.sizeadjuster.magic.cast.StaffCaster;
 import com.mugewrayce.sizeadjuster.magic.exam.ExamAttack;
 import com.mugewrayce.sizeadjuster.magic.exam.ExamSpec;
+import com.mugewrayce.sizeadjuster.util.PlayerRoles;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -16,6 +19,7 @@ import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.ai.targeting.TargetingConditions;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
@@ -39,6 +43,12 @@ public class TrialMagicBodyEntity extends AbstractMagicBodyEntity {
 
     private static final String[] EMPTY = new String[0];
 
+    /** W19：召唤物冷静期（tick，3 秒）：不动、不攻击、免疫一切伤害。 */
+    public static final int GRACE_TICKS = 60;
+
+    /** W19：普通魔法水晶掉落率（考试 / 试炼体 30%，固定 1 个，不吃抢夺）。 */
+    private static final float CRYSTAL_DROP_CHANCE = 0.30F;
+
     private UUID ownerUuid;
     private String sessionId = "";
     private final EnumSet<ExamAttack> allowedAttacks = EnumSet.noneOf(ExamAttack.class);
@@ -47,6 +57,10 @@ public class TrialMagicBodyEntity extends AbstractMagicBodyEntity {
     private boolean attackPlayers;
     private float configuredMaxHealth = 20.0F;
     private boolean goalsInstalled;
+    /** W19：冷静期剩余 tick（运行期，不存档；读档一律按 0 处理）。 */
+    private int graceTicks;
+    /** W19：配置里的无敌（冷静期结束后恢复成这个值）。 */
+    private boolean configuredInvulnerable;
 
     public TrialMagicBodyEntity(EntityType<? extends TrialMagicBodyEntity> type, Level level) {
         super(type, level);
@@ -93,11 +107,54 @@ public class TrialMagicBodyEntity extends AbstractMagicBodyEntity {
         // 先设上限再设当前值（坑 2：顺序反了会被夹到旧上限）
         this.getAttribute(Attributes.MAX_HEALTH).setBaseValue(this.configuredMaxHealth);
         this.setHealth(this.configuredMaxHealth);
-        this.setInvulnerable(spec.invulnerable());
         this.examAi = spec.ai();
-        this.setNoAi(!this.examAi);
+        this.configuredInvulnerable = spec.invulnerable();
+        // W19：3 秒冷静期——不动、不攻击、免疫一切伤害；到期后按规格恢复
+        this.graceTicks = GRACE_TICKS;
+        this.setInvulnerable(true);
+        this.setNoAi(true);
         this.setPersistenceRequired();
         this.installGoals();
+    }
+
+    /**
+     * W19：冷静期倒计时。到期后恢复配置的 AI / 无敌状态。
+     * 读档时 {@link #graceTicks} 一律为 0（不跨存档恢复冷静期）。
+     */
+    @Override
+    public void tick() {
+        super.tick();
+        if (this.level().isClientSide() || this.graceTicks <= 0) {
+            return;
+        }
+        this.graceTicks--;
+        if (this.graceTicks == 0) {
+            this.setInvulnerable(this.configuredInvulnerable);
+            this.setNoAi(!this.examAi);
+        }
+    }
+
+    /** W19：冷静期内免疫一切伤害；{@code /kill} 与虚空仍按原版规则生效。 */
+    @Override
+    public boolean isInvulnerableTo(ServerLevel level, DamageSource source) {
+        if (this.graceTicks > 0 && !PlayerRoles.isForcedKill(source)) {
+            return true;
+        }
+        return super.isInvulnerableTo(level, source);
+    }
+
+    /**
+     * W19：额外掉落 1 个普通魔法水晶，概率 30%（考试 / 试炼体）。
+     *
+     * <p>显式忽略 {@code hitByPlayer}：<b>抢夺不增加数量</b>；只掉 1 个，不走 loot table。
+     * 属于考试会话的掉落会在 {@code ExamManager} 的死亡监听里自动收进奖励箱。</p>
+     */
+    @Override
+    protected void dropCustomDeathLoot(ServerLevel level, DamageSource source, boolean hitByPlayer) {
+        super.dropCustomDeathLoot(level, source, hitByPlayer);
+        if (this.random.nextFloat() < CRYSTAL_DROP_CHANCE) {
+            this.drop(new ItemStack(MagicItems.magicCrystal), false, false);
+        }
     }
 
     private void installGoals() {
@@ -180,6 +237,7 @@ public class TrialMagicBodyEntity extends AbstractMagicBodyEntity {
         output.putString("exam_session", this.sessionId);
         output.putBoolean("exam_ai", this.examAi);
         output.putBoolean("exam_attack_players", this.attackPlayers);
+        output.putBoolean("exam_invulnerable", this.configuredInvulnerable);
         output.putFloat("exam_max_health", this.configuredMaxHealth);
         StringBuilder attacks = new StringBuilder();
         for (ExamAttack attack : this.allowedAttacks) {
@@ -207,6 +265,7 @@ public class TrialMagicBodyEntity extends AbstractMagicBodyEntity {
         this.sessionId = input.getStringOr("exam_session", "");
         this.examAi = input.getBooleanOr("exam_ai", false);
         this.attackPlayers = input.getBooleanOr("exam_attack_players", false);
+        this.configuredInvulnerable = input.getBooleanOr("exam_invulnerable", true);
         this.configuredMaxHealth = input.getFloatOr("exam_max_health", 20.0F);
         this.allowedAttacks.clear();
         for (String part : split(input.getStringOr("exam_attacks", ""))) {
@@ -225,6 +284,9 @@ public class TrialMagicBodyEntity extends AbstractMagicBodyEntity {
         if (this.configuredMaxHealth > 0.0F) {
             this.getAttribute(Attributes.MAX_HEALTH).setBaseValue(this.configuredMaxHealth);
         }
+        // W19：读档不恢复冷静期，按存档里的 AI / 无敌归一化
+        this.graceTicks = 0;
+        this.setInvulnerable(this.configuredInvulnerable);
         this.setNoAi(!this.examAi);
         this.installGoals();
     }
