@@ -55,6 +55,8 @@ public final class BookCaster {
         }
         boolean started = TimePauseZone.start(player.level(), player, data.range(), data.excluded());
         if (started) {
+            // W19：起手音（翻开书页）+ 生效音，避免只有结算音
+            SoundFx.at(player, SoundEvents.ENCHANTMENT_TABLE_USE, 0.6F, 1.0F);
             SoundFx.at(player, SoundEvents.CONDUIT_DEACTIVATE, 1.0F, 0.8F);
         }
         return started;

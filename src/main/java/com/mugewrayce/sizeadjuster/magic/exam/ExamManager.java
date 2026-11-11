@@ -52,6 +52,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.storage.TagValueInput;
 import net.minecraft.world.level.storage.TagValueOutput;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
@@ -89,6 +90,9 @@ public final class ExamManager {
     private static final double SPAWN_RADIUS = 8.0D;
     private static final double SPAWN_MIN_GAP = 1.5D;
 
+    /** W19：考试 / 试炼召唤物冷静期（3 秒）。 */
+    private static final int GRACE_TICKS = 60;
+
     /** 猪 / 世界文字实体的归属标记，只用于启动清扫（不新增语言键，D-7）。 */
     public static final String PIG_TAG = "mugewrayce_exam_pig";
     public static final String TEXT_TAG = "mugewrayce_exam_text";
@@ -124,9 +128,16 @@ public final class ExamManager {
             if (entity instanceof TrialMagicBodyEntity body && body.hasSession()) {
                 Active active = ACTIVE.get(body.getSessionId());
                 if (active != null) {
-                    // 死亡由 aliveBodies() 每 tick 复查，这里只保证会话仍在追
+                    // 死亡由 aliveBodies() 每 tick 复查，这里只保证会话仍在追 + 收掉落
                     SizeAdjusterMod.LOGGER.debug("Exam target {} of session {} died",
                             body.getUUID(), active.id);
+                    collectDrops(active, entity.blockPosition());
+                }
+            } else if (entity instanceof Pig pig && pig.entityTags().contains(PIG_TAG)) {
+                // W19：保护猪被 /kill 等杀死时，原版掉落（生猪排 / 皮革）也收进奖励箱
+                Active active = findByPig(pig.getUUID());
+                if (active != null) {
+                    collectDrops(active, entity.blockPosition());
                 }
             }
         });
@@ -347,7 +358,9 @@ public final class ExamManager {
                     continue;
                 }
                 pig.setPos(pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D);
+                // W19：只在 3 秒冷静期内 NoAI + 无敌，到期统一解除（见 tickActive）
                 pig.setNoAi(true);
+                pig.setInvulnerable(true);
                 pig.setPersistenceRequired();
                 pig.addTag(PIG_TAG);
                 pig.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH)
@@ -533,6 +546,16 @@ public final class ExamManager {
 
     private static void tickActive(MinecraftServer server, Active active, int serverTick) {
         active.remainingTicks--;
+        // W19：3 秒冷静期结束后统一解除召唤物的 NoAI / 无敌（试炼体自己在 tick 里恢复）
+        if (!active.graceDone && active.elapsedTicks() >= GRACE_TICKS) {
+            active.graceDone = true;
+            for (UUID id : active.pigIds) {
+                if (active.level.getEntity(id) instanceof Pig pig) {
+                    pig.setNoAi(false);
+                    pig.setInvulnerable(false);
+                }
+            }
+        }
         if (active.spec.kind() == ExamSpec.Kind.SELF_HEAL) {
             suppressNaturalRegen(active);
         }
@@ -611,8 +634,12 @@ public final class ExamManager {
                     || Math.abs(playerChunk.z() - active.centerChunk.z()) > 1;
             if (outside && serverTick - active.lastRangeWarn >= RANGE_WARN_COOLDOWN) {
                 active.lastRangeWarn = serverTick;
+                // W19：提示里带上考试中心坐标与玩家当前坐标（6 个参数）
                 player.sendSystemMessage(Component.translatable(
-                        "message.mugewrayce-mod.exam_out_of_range"));
+                        "message.mugewrayce-mod.exam_out_of_range",
+                        active.chestPos.getX(), active.chestPos.getY(), active.chestPos.getZ(),
+                        player.blockPosition().getX(), player.blockPosition().getY(),
+                        player.blockPosition().getZ()));
             }
         }
         for (UUID id : new ArrayList<>(active.targets)) {
@@ -739,17 +766,46 @@ public final class ExamManager {
             reward.set(ModComponents.PROMOTION_DATA,
                     new PromotionData(active.type, active.mode, active.sub, active.targetLevel));
         }
+        if (!putIntoRewardChest(active, reward)) {
+            active.level.addFreshEntity(new ItemEntity(active.level,
+                    active.chestPos.getX() + 0.5D, active.chestPos.getY() + 0.5D,
+                    active.chestPos.getZ() + 0.5D, reward));
+        }
+    }
+
+    /**
+     * W19：把一堆物品放进奖励箱；有空位返回 {@code true}（已放入），箱满返回 {@code false}
+     * （调用方决定是掉在地上还是留在原地）。
+     */
+    private static boolean putIntoRewardChest(Active active, ItemStack stack) {
+        if (stack == null || stack.isEmpty()) {
+            return false;
+        }
         if (active.level.getBlockEntity(active.chestPos) instanceof ChestBlockEntity chest) {
             for (int slot = 0; slot < chest.getContainerSize(); slot++) {
                 if (chest.getItem(slot).isEmpty()) {
-                    chest.setItem(slot, reward);
-                    return;
+                    chest.setItem(slot, stack);
+                    return true;
                 }
             }
         }
-        active.level.addFreshEntity(new ItemEntity(active.level,
-                active.chestPos.getX() + 0.5D, active.chestPos.getY() + 0.5D,
-                active.chestPos.getZ() + 0.5D, reward));
+        return false;
+    }
+
+    /**
+     * W19：考试 / 试炼召唤物死亡后，把原地刚掉出来的 {@link ItemEntity} 收进奖励箱。
+     *
+     * <p>只收 2.5 格内、刚生成（{@code tickCount <= 2}）的掉落；箱满时<b>不丢弃</b>，
+     * 留在原地避免吞掉落。</p>
+     */
+    private static void collectDrops(Active active, BlockPos pos) {
+        AABB area = new AABB(pos).inflate(2.5D);
+        for (ItemEntity item : active.level.getEntitiesOfClass(ItemEntity.class, area,
+                entity -> entity.isAlive() && entity.tickCount <= 2)) {
+            if (putIntoRewardChest(active, item.getItem().copy())) {
+                item.discard();
+            }
+        }
     }
 
     private static void discardTargets(Active active) {
@@ -901,6 +957,16 @@ public final class ExamManager {
         return null;
     }
 
+    /** W19：按保护猪的 UUID 反查所属会话（会话结束的猪已 discard，不会误收）。 */
+    private static Active findByPig(UUID pigId) {
+        for (Active active : ACTIVE.values()) {
+            if (active.state == ExamSession.State.RUNNING && active.pigIds.contains(pigId)) {
+                return active;
+            }
+        }
+        return null;
+    }
+
     private static Active findByChest(ServerLevel level, BlockPos pos) {
         for (Active active : ACTIVE.values()) {
             if (active.state == ExamSession.State.RUNNING
@@ -937,6 +1003,8 @@ public final class ExamManager {
         private ExamSession.State state = ExamSession.State.RUNNING;
         private int spawnedBodies;
         private int spawnedPigs;
+        /** W19：冷静期是否已结束（运行期标志，不存档）。 */
+        private boolean graceDone;
         private final List<UUID> pigIds = new ArrayList<>();
         private UUID displayId;
         private long lastRangeWarn = -RANGE_WARN_COOLDOWN;
@@ -971,11 +1039,15 @@ public final class ExamManager {
                 Entity entity = level.getEntity(id);
                 if (entity instanceof TrialMagicBodyEntity) {
                     active.spawnedBodies++;
-                } else if (entity instanceof Pig) {
+                } else if (entity instanceof Pig pig) {
                     active.pigIds.add(id);
                     active.spawnedPigs++;
+                    // W19：重启恢复不恢复冷静期，避免 NoAI / 无敌被写进存档后永久保留
+                    pig.setNoAi(false);
+                    pig.setInvulnerable(false);
                 }
             }
+            active.graceDone = true;
             return active;
         }
 

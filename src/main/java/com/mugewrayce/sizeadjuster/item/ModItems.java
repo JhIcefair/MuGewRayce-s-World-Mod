@@ -22,7 +22,6 @@ import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.item.enchantment.ItemEnchantments;
 import net.minecraft.world.item.equipment.Equippable;
-import net.minecraft.world.item.equipment.EquipmentAssets;
 
 import java.util.function.Function;
 
@@ -102,9 +101,10 @@ public final class ModItems {
         baishanBag = registerItem("baishan_bag",
                 new Item.Properties().stacksTo(1), BaishanBagItem::new);
 
-        // 净化光环：头盔位护甲（EQUIPPABLE 组件，右键自动穿戴，assetId → equipment/equipoise_halo.json → 穿戴外显）；
-        // 20 护甲 / 20 韧性 / 80% 击退抗性；自带附魔（延迟组件，随注册表就绪后解析）；
-        // 火焰免疫 + 不可破坏（base）
+        // 净化光环：头盔位可装备（EQUIPPABLE 组件，右键自动穿戴）；
+        // W19 去掉 assetId → 不再走护甲贴图层，改为“头戴物品模型”（models/item + display.head），
+        // 外显是一枚悬浮的发光环而不是头盔贴图；20 护甲 / 20 韧性 / 80% 击退抗性；
+        // 自带附魔（延迟组件，随注册表就绪后解析）；火焰免疫 + 不可破坏（base）
         equipoiseHalo = registerItem("equipoise_halo",
                 base(new Item.Properties().stacksTo(1)
                         .attributes(haloModifiers())
@@ -164,19 +164,21 @@ public final class ModItems {
     }
 
     /**
-     * 净化光环可装备性：头盔位；右键自动穿戴/交换（swappable）；
-     * assetId → equipment/equipoise_halo.json 定义外穿模型层
-     * （贴图 textures/entity/equipment/humanoid|humanoid_baby/equipoise_halo.png，
-     * 即 ls\14.png），穿戴后像一般头盔那样外显。声音用通用穿戴音。
+     * 净化光环可装备性：头盔位；右键自动穿戴/交换（swappable）；声音用通用穿戴音。
+     *
+     * <p>W19：<b>不设 assetId</b>。26.1 里 {@code HumanoidArmorLayer.shouldRender} 只在
+     * {@code EQUIPPABLE.assetId()} 存在时才走护甲贴图层；去掉后由 {@code CustomHeadLayer}
+     * 在 {@code ItemDisplayContext.HEAD} 下渲染<b>物品模型</b>，并应用模型 JSON 的
+     * {@code display.head}（见 {@code models/item/equipoise_halo.json}）。</p>
+     *
+     * <p>原头盔贴图与 {@code equipment/equipoise_halo.json} 暂时保留但不再引用，
+     * 下一版由用户决定是否删除。</p>
      */
     private static Equippable haloEquippable() {
         return Equippable.builder(EquipmentSlot.HEAD)
                 .setEquipSound(SoundEvents.ARMOR_EQUIP_GENERIC)
-                .setAsset(ResourceKey.create(EquipmentAssets.ROOT_ID,
-                        Identifier.fromNamespaceAndPath(SizeAdjusterMod.MOD_ID, "equipoise_halo")))
                 .setDispensable(true)
                 .setSwappable(true)
-                .setDamageOnHurt(true)
                 .build();
     }
 

@@ -335,9 +335,14 @@ public class MagicStaffScreen extends Screen {
                     LABEL_X, this.rowSubY + 6, 0xFF00AAFF);
         }
         if (!this.canConfirm()) {
+            // W19：提示移到具体项行下方（确认键上方），不再压住模式按钮；
+            // 点式没有“具体项”，文案改成只提类型与模式。
+            boolean pointMode = mode == CastMode.POINT;
             graphics.centeredText(this.font,
-                    Component.translatable("gui.mugewrayce-mod.magic_staff.incomplete"),
-                    this.width / 2, this.rowSubY - 24, 0xFFAAAAAA);
+                    Component.translatable(pointMode
+                            ? "gui.mugewrayce-mod.magic_staff.incomplete_mode"
+                            : "gui.mugewrayce-mod.magic_staff.incomplete"),
+                    this.width / 2, this.rowSubY + 28, 0xFFAAAAAA);
         }
 
         for (Highlight highlight : this.highlights) {
