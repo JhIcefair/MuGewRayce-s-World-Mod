@@ -1,12 +1,17 @@
 package com.mugewrayce.sizeadjuster.entity;
 
+import com.mugewrayce.sizeadjuster.item.MagicItems;
+import com.mugewrayce.sizeadjuster.magic.cast.StaffCaster;
+import com.mugewrayce.sizeadjuster.magic.exam.ExamAttack;
 import com.mugewrayce.sizeadjuster.magic.mana.ManaService;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
+import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
@@ -15,7 +20,10 @@ import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+
+import java.util.EnumSet;
 
 /**
  * 没有生命的魔法体（W08 内容层 → W13 生成/击杀数值）。
@@ -40,6 +48,16 @@ public class LifelessMagicBodyEntity extends AbstractMagicBodyEntity {
     public static final int EXPERIENCE_REWARD = 20;
     /** 击杀时向所在区块释放的魔力。 */
     public static final int KILL_MANA_RELEASE = 800;
+
+    /** W19：自发魔法攻击的射程（格）。 */
+    private static final double CAST_RANGE = 16.0D;
+    /** W19：两发魔法弹的间隔（tick，3 秒）。 */
+    private static final int CAST_INTERVAL_TICKS = 60;
+    /** W19：每发魔法弹的伤害。 */
+    private static final float CAST_DAMAGE = 4.0F;
+
+    /** W19：普通魔法水晶掉落率（固定 1 个，不吃抢夺）。 */
+    private static final float CRYSTAL_DROP_CHANCE = 0.10F;
 
     public LifelessMagicBodyEntity(EntityType<? extends LifelessMagicBodyEntity> type, Level level) {
         super(type, level);
@@ -79,14 +97,92 @@ public class LifelessMagicBodyEntity extends AbstractMagicBodyEntity {
         super.die(source);
     }
 
+    /**
+     * W19：额外掉落 1 个普通魔法水晶，概率 10%。
+     *
+     * <p>显式忽略 {@code hitByPlayer}：<b>抢夺不增加数量</b>；只掉 1 个，不走 loot table。</p>
+     */
+    @Override
+    protected void dropCustomDeathLoot(ServerLevel level, DamageSource source, boolean hitByPlayer) {
+        super.dropCustomDeathLoot(level, source, hitByPlayer);
+        if (this.random.nextFloat() < CRYSTAL_DROP_CHANCE) {
+            this.drop(new ItemStack(MagicItems.magicCrystal), false, false);
+        }
+    }
+
     @Override
     protected void registerGoals() {
         this.goalSelector.addGoal(0, new FloatGoal(this));
+        // W19：先放魔法，再近战（16 格内每 3 秒一发点式魔法弹；贴脸时仍会挥击）
+        this.goalSelector.addGoal(1, new LifelessCastGoal(this));
         this.goalSelector.addGoal(2, new MeleeAttackGoal(this, 1.0, false));
         this.goalSelector.addGoal(7, new RandomStrollGoal(this, 0.8));
         this.goalSelector.addGoal(8, new LookAtPlayerGoal(this, Player.class, 8.0F));
         this.goalSelector.addGoal(8, new RandomLookAroundGoal(this));
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
         this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, true));
+    }
+
+    /**
+     * W19：没有生命的魔法体也会用魔法——目标在 16 格内时每 3 秒放一发点式魔法弹。
+     *
+     * <p>目标来自 {@link NearestAttackableTargetGoal}（不另写搜索）；只占 LOOK 旗标，
+     * 与近战 / 游走互不阻塞。冷却只存在 goal 实例里，不写存档。</p>
+     */
+    private static final class LifelessCastGoal extends Goal {
+
+        private final LifelessMagicBodyEntity body;
+        private int cooldown;
+
+        private LifelessCastGoal(LifelessMagicBodyEntity body) {
+            this.body = body;
+            this.setFlags(EnumSet.of(Goal.Flag.LOOK));
+        }
+
+        @Override
+        public boolean canUse() {
+            Player target = this.playerTarget();
+            if (target == null) {
+                return false;
+            }
+            return this.body.distanceToSqr(target) <= CAST_RANGE * CAST_RANGE;
+        }
+
+        @Override
+        public boolean canContinueToUse() {
+            return this.canUse();
+        }
+
+        @Override
+        public boolean requiresUpdateEveryTick() {
+            return true;
+        }
+
+        @Override
+        public void tick() {
+            Player target = this.playerTarget();
+            if (target == null) {
+                return;
+            }
+            this.body.getLookControl().setLookAt(target, 30.0F, 30.0F);
+            if (this.cooldown > 0) {
+                this.cooldown--;
+                return;
+            }
+            this.cooldown = CAST_INTERVAL_TICKS;
+            if (this.body.level() instanceof ServerLevel serverLevel) {
+                StaffCaster.castTrialAttack(serverLevel, this.body, target, ExamAttack.POINT, CAST_DAMAGE);
+            }
+        }
+
+        /** 当前目标必须是存活、非创造 / 非旁观的玩家。 */
+        private Player playerTarget() {
+            LivingEntity target = this.body.getTarget();
+            if (!(target instanceof Player player) || !player.isAlive()
+                    || player.isSpectator() || player.isCreative()) {
+                return null;
+            }
+            return player;
+        }
     }
 }

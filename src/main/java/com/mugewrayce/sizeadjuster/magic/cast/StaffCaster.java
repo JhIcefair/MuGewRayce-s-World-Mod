@@ -86,10 +86,11 @@ public final class StaffCaster {
             }
             if (selection.isSustained()) {
                 SUSTAINED.put(player.getUUID(), new SustainedState(selection, player.getLookAngle().normalize()));
-                SoundFx.at(player, SoundEvents.AMETHYST_BLOCK_CHIME, 0.7F, 1.4F);
+                // W19：按下右键即发声（起手音），音效全部复用原版 SoundEvents
+                SoundFx.at(player, SoundEvents.BEACON_ACTIVATE, 0.5F, 1.2F);
             } else {
                 spawnFormation(serverLevel, serverPlayer, selection, true);
-                SoundFx.at(player, SoundEvents.AMETHYST_BLOCK_RESONATE, 0.8F, 0.9F);
+                SoundFx.at(player, SoundEvents.AMETHYST_BLOCK_RESONATE, 0.6F, 1.2F);
             }
             player.startUsingItem(hand);
             return InteractionResult.CONSUME;
@@ -102,6 +103,8 @@ public final class StaffCaster {
             if (!tryPay(serverPlayer, plan.cost(), false)) {
                 return InteractionResult.SUCCESS;
             }
+            // W19：起手音（施法准备）+ 生效音，避免只有结算音
+            SoundFx.at(player, SoundEvents.EVOKER_PREPARE_ATTACK, 0.5F, 1.4F);
             SoundFx.at(player, SoundEvents.EVOKER_CAST_SPELL, 0.8F, 1.2F);
             plan.action().run();
             return InteractionResult.SUCCESS;
@@ -109,8 +112,15 @@ public final class StaffCaster {
         if (selection.isCharging()) {
             // W18：点式 / 非防御魔法阵改为“按下进入蓄力，松手结算”；
             // 单击与长按的分流在 releaseUsing 里按 hold 的 tick 数判定。
-            CHARGES.remove(player.getUUID());
-            CHARGES.put(player.getUUID(), new ChargeState(selection));
+            // W19：点式按下即在法杖前悬停一颗同色魔法球，松手用同一颗球射出。
+            ChargeState previous = CHARGES.remove(player.getUUID());
+            discardOrb(previous);
+            ChargeState charge = new ChargeState(selection);
+            if (selection.mode() == CastMode.POINT) {
+                charge.orb = spawnHoverOrb(serverLevel, serverPlayer, selection);
+            }
+            CHARGES.put(player.getUUID(), charge);
+            SoundFx.at(player, SoundEvents.EVOKER_PREPARE_ATTACK, 0.7F, 1.2F);
             player.startUsingItem(hand);
             return InteractionResult.CONSUME;
         }
@@ -127,6 +137,14 @@ public final class StaffCaster {
         }
         ChargeState charge = CHARGES.get(player.getUUID());
         if (charge != null) {
+            // W19：悬停球跟随法杖前端（位置同净化法杖：眼位 + 视线×1.3 − 0.4 格）
+            if (charge.orb != null) {
+                if (charge.orb.isAlive()) {
+                    charge.orb.setPos(inFrontOfStaff(player));
+                } else {
+                    charge.orb = null;
+                }
+            }
             // W18：蓄力满 10 tick 播一次“充能完成”音效；不重复发射
             int held = stack.getUseDuration(player) - remainingUseDuration;
             if (held >= CHARGE_TICKS && !charge.notified) {
@@ -155,7 +173,7 @@ public final class StaffCaster {
             if (charge != null) {
                 // W18：按住时长 = 总时长 − 剩余时长（不受释放时序影响）
                 int held = stack.getUseDuration(player) - timeLeft;
-                resolveCharge(serverLevel, player, charge.selection, held);
+                resolveCharge(serverLevel, player, charge, held);
                 return true;
             }
         }
@@ -169,29 +187,87 @@ public final class StaffCaster {
     }
 
     /**
-     * W18：蓄力结算。
+     * W18/W19：蓄力结算。
      *
      * <ul>
-     *   <li>点式：不足 10 tick 按原数值施放一发；满 10 tick 伤害 {@code ceil(base × 1.1)}。</li>
+     *   <li>点式：不足 10 tick 按原数值施放一发；满 10 tick 伤害 {@code ceil(base × 1.1)}。
+     *       W19 起直接发射蓄力期间悬停的那颗球，不再另生成；球已消失时退回旧路径。</li>
      *   <li>魔法阵（非防御）：不足 10 tick 不生成、不扣魔；满 10 tick 生成并保留 30 秒。</li>
      * </ul>
      */
-    private static void resolveCharge(ServerLevel level, ServerPlayer player, Selection selection, int held) {
+    private static void resolveCharge(ServerLevel level, ServerPlayer player, ChargeState charge, int held) {
+        Selection selection = charge.selection;
+        boolean charged = held >= CHARGE_TICKS;
         if (selection.mode() == CastMode.POINT) {
             if (!tryPay(player, selection.startCost(), false)) {
+                discardOrb(charge);
                 return;
             }
-            castPoint(level, player, selection, held >= CHARGE_TICKS);
+            fireHoverOrb(level, player, selection, charge.orb, charged);
             return;
         }
-        if (held < CHARGE_TICKS) {
+        discardOrb(charge);
+        if (!charged) {
             return; // 魔法阵：点一下不生成，也不扣启动耗魔
         }
         if (!tryPay(player, selection.startCost(), false)) {
             return;
         }
         spawnFormation(level, player, selection, false);
-        SoundFx.at(player, SoundEvents.AMETHYST_BLOCK_CHIME, 0.8F, 0.8F);
+    }
+
+    /** W19：按下右键时在法杖前悬停一颗同色魔法球（松手用同一颗射出）。 */
+    private static MagicBoltEntity spawnHoverOrb(ServerLevel level, ServerPlayer player, Selection selection) {
+        MagicBoltEntity orb = new MagicBoltEntity(level, player);
+        orb.setColor(MagicPalette.colorFor(selection.type()));
+        orb.setKind(MagicBoltEntity.KIND_POINT);
+        orb.setPos(inFrontOfStaff(player));
+        orb.setCharging(true);
+        level.addFreshEntity(orb);
+        return orb;
+    }
+
+    /** W19：把悬停球射出去；球已不存在（被打掉 / 区块卸载）时退回 {@link #castPoint}。 */
+    private static void fireHoverOrb(ServerLevel level, ServerPlayer player, Selection selection,
+                                     MagicBoltEntity orb, boolean charged) {
+        if (orb == null || !orb.isAlive()) {
+            castPoint(level, player, selection, charged);
+            return;
+        }
+        SoundFx.at(player, SoundEvents.ILLUSIONER_CAST_SPELL, 0.7F, 1.2F);
+        if (selection.type() == MagicType.HEAL) {
+            orb.setHeal(MagicNumbers.pointHeal(selection.level()),
+                    MagicNumbers.regenTicks(selection.level()), MagicNumbers.regenAmplifier(selection.level()));
+            SoundFx.at(player, SoundEvents.BEACON_ACTIVATE, 0.5F, 1.6F);
+        } else {
+            float damage = MagicNumbers.pointDamage(selection.level());
+            if (charged) {
+                damage = (float) Math.ceil(damage * 1.1F);
+            }
+            orb.setDamage(damage);
+        }
+        Vec3 look = player.getLookAngle().normalize();
+        orb.setPos(player.getEyePosition().subtract(0.0, 0.1, 0.0));
+        orb.setCharging(false);
+        orb.shoot(look.x, look.y, look.z, 4.5F, 0.0F);
+    }
+
+    /** 丢弃蓄力中的悬停球（开始新蓄力 / 断线 / 死亡 / 结束使用）。 */
+    private static void discardOrb(ChargeState charge) {
+        if (charge == null || charge.orb == null) {
+            return;
+        }
+        if (charge.orb.isAlive()) {
+            charge.orb.discard();
+        }
+        charge.orb = null;
+    }
+
+    /** 法杖前端（视线前方约 1.3 格、略低于视线）——与净化法杖的充能球位置一致。 */
+    private static Vec3 inFrontOfStaff(Player player) {
+        return player.getEyePosition()
+                .add(player.getLookAngle().scale(1.3D))
+                .subtract(0.0D, 0.4D, 0.0D);
     }
 
     /** W18：点式一发（充能时伤害 +10%，向上取整）；治疗点式不加成。 */
@@ -212,7 +288,8 @@ public final class StaffCaster {
 
     public static void clearPlayer(UUID playerId) {
         SUSTAINED.remove(playerId);
-        CHARGES.remove(playerId);
+        ChargeState charge = CHARGES.remove(playerId);
+        discardOrb(charge);
         MagicFormationEntity defense = DEFENSES.remove(playerId);
         if (defense != null && defense.isAlive()) {
             EquipoiseFormationEntity.deactivateDefense(playerId);
@@ -222,9 +299,7 @@ public final class StaffCaster {
 
     private static void castOnce(ServerLevel level, ServerPlayer player, Selection selection) {
         int color = MagicPalette.colorFor(selection.type());
-        if (selection.mode() == CastMode.FORMATION) {
-            SoundFx.at(player, SoundEvents.AMETHYST_BLOCK_CHIME, 0.8F, 0.8F);
-        } else {
+        if (selection.mode() != CastMode.FORMATION) {
             SoundFx.at(player, SoundEvents.ILLUSIONER_CAST_SPELL, 0.7F, 1.2F);
         }
         if (selection.mode() == CastMode.POINT) {
@@ -271,6 +346,14 @@ public final class StaffCaster {
      */
     public static void castTrialAttack(ServerLevel level, LivingEntity caster,
                                        LivingEntity target, ExamAttack attack) {
+        castTrialAttack(level, caster, target, attack, attack.damage());
+    }
+
+    /**
+     * W19：带自定义伤害的考试目标攻击入口（没有生命的魔法体用它发 4 点魔法弹）。
+     */
+    public static void castTrialAttack(ServerLevel level, LivingEntity caster,
+                                       LivingEntity target, ExamAttack attack, float damage) {
         if (caster == null || target == null || !target.isAlive()) {
             return;
         }
@@ -284,7 +367,7 @@ public final class StaffCaster {
         bolt.setPos(from);
         bolt.setColor(MagicPalette.NATURAL);
         bolt.setKind(attack == ExamAttack.POINT ? MagicBoltEntity.KIND_POINT : MagicBoltEntity.KIND_LINE);
-        bolt.setDamage(attack.damage());
+        bolt.setDamage(damage);
         bolt.setBypassInvulnerability(true);
         bolt.shoot(direction.x, direction.y, direction.z, 1.2F, 0.4F);
         level.addFreshEntity(bolt);
@@ -379,7 +462,8 @@ public final class StaffCaster {
     private static void stopUsing(ServerPlayer player) {
         player.stopUsingItem();
         SUSTAINED.remove(player.getUUID());
-        CHARGES.remove(player.getUUID());
+        ChargeState charge = CHARGES.remove(player.getUUID());
+        discardOrb(charge);
         MagicFormationEntity defense = DEFENSES.remove(player.getUUID());
         if (defense != null && defense.isAlive()) {
             EquipoiseFormationEntity.deactivateDefense(player.getUUID());
@@ -435,6 +519,12 @@ public final class StaffCaster {
         }
         formation.startPersist();
         level.addFreshEntity(formation);
+        // W19：阵法生成音（伤害阵 / 治愈阵各一条；防御阵在按住分支里已发声）
+        if (type == EquipoiseFormationEntity.TYPE_MAGIC_GROUP_ATTACK) {
+            SoundFx.at(player, SoundEvents.EVOKER_CAST_SPELL, 0.8F, 0.9F);
+        } else {
+            SoundFx.at(player, SoundEvents.BEACON_ACTIVATE, 0.7F, 1.2F);
+        }
         return formation;
     }
 
@@ -546,9 +636,10 @@ public final class StaffCaster {
         }
     }
 
-    /** W18：点式 / 魔法阵的蓄力状态。 */
+    /** W18/W19：点式 / 魔法阵的蓄力状态；点式额外持有悬停球。 */
     private static final class ChargeState {
         private final Selection selection;
+        private MagicBoltEntity orb;
         private boolean notified;
 
         private ChargeState(Selection selection) {
