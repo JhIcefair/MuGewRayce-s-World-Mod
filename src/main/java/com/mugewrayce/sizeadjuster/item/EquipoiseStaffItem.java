@@ -2,9 +2,12 @@ package com.mugewrayce.sizeadjuster.item;
 
 import com.mugewrayce.sizeadjuster.entity.EquipoiseFormationEntity;
 import com.mugewrayce.sizeadjuster.entity.EquipoiseOrbEntity;
+import com.mugewrayce.sizeadjuster.magic.MagicSkill;
 import com.mugewrayce.sizeadjuster.magic.SoundFx;
+import com.mugewrayce.sizeadjuster.magic.cast.SkillEffects;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -87,10 +90,36 @@ public class EquipoiseStaffItem extends LiftableItem {
         }
         EquipoiseFormationEntity.deactivateDefense(player.getUUID());
         SUSTAINED_LINES.remove(player.getUUID());
+        // W19：7~14 是自然魔法技能——按下即结算，不进入蓄力 / 长按；默认不扣魔力。
+        // 技能有自己的起手音，不再叠一条 chime（避免同一 tick 多条音效变成噪音）。
+        int mode = StaffCastModes.get(player);
+        if (StaffCastModes.isSkill(mode)) {
+            castSkill(level, player, mode);
+            return InteractionResult.SUCCESS;
+        }
         // W17：按下右键（起手）音效
         SoundFx.at(player, SoundEvents.AMETHYST_BLOCK_CHIME, 0.5F, 1.6F);
         player.startUsingItem(hand);
         return InteractionResult.CONSUME;
+    }
+
+    /** W19：净化法杖的自然魔法技能（与普通魔法杖同效果；目标不合法时无副作用、不发声）。 */
+    private static void castSkill(Level level, Player player, int mode) {
+        if (!(level instanceof ServerLevel serverLevel) || !(player instanceof ServerPlayer serverPlayer)) {
+            return;
+        }
+        MagicSkill skill = StaffCastModes.skillFor(mode);
+        if (skill == null) {
+            return;
+        }
+        SkillEffects.Plan plan = SkillEffects.plan(serverLevel, serverPlayer, skill);
+        if (plan == null) {
+            return;
+        }
+        // W19：起手音 + 生效音（全部复用原版 SoundEvents）
+        SoundFx.at(player, SoundEvents.EVOKER_PREPARE_ATTACK, 0.6F, 1.3F);
+        SoundFx.at(player, SoundEvents.EVOKER_CAST_SPELL, 0.8F, 1.1F);
+        plan.action().run();
     }
 
     @Override
@@ -100,6 +129,9 @@ public class EquipoiseStaffItem extends LiftableItem {
         }
         int heldTicks = getUseDuration(stack, entity) - remainingUseDuration;
         int mode = StaffCastModes.get(player);
+        if (StaffCastModes.isSkill(mode)) {
+            return; // W19：技能按下即结算，不会进入使用状态
+        }
         switch (mode) {
             case StaffCastModes.MODE_ORB -> {
                 if (heldTicks >= CHARGE_THRESHOLD_TICKS) {
