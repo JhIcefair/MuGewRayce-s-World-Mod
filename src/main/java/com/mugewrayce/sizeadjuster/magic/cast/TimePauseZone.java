@@ -12,11 +12,13 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.ticks.LevelTicks;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -26,9 +28,13 @@ import java.util.UUID;
 /**
  * 时间暂停的区域注册表（W14b，草案 §6.4 / 交接单 §2.4）。
  *
- * <p>三层暂停：区域内的非玩家实体跳过 tick/AI、方块实体跳过 tick、随机刻跳过；
- * 使用者本人永远不冻结，移动超过 0.5 格立即结束；每 20 tick 扣 1 点魔力，
- * 扣不起立即结束并提示。</p>
+ * <p>四层暂停：区域内的非玩家实体跳过 tick/AI、方块实体跳过 tick、随机刻跳过、
+ * <b>方块 / 流体计划刻延后</b>（W19）；使用者本人永远不冻结，移动超过 0.5 格立即结束；
+ * 每 20 tick 扣 1 点魔力，扣不起立即结束并提示。</p>
+ *
+ * <p><b>昼夜（世界时钟）不冻结</b>：26.1 的 {@code WorldClock} 是维度级全局值
+ * （{@code ServerClockManager} 全服一份），不能按区块冻结；因此本魔法只让“区域 tick 静止”，
+ * {@code /time query gametime} 继续增长。若以后要连昼夜一起停，需要另开一个明确开关（本轮不做）。</p>
  *
  * <p>{@link #TIME_PAUSE_ENABLED} 是总开关；{@link #TIME_PAUSE_FREEZE_BLOCKS}
  * 关闭时退化为“只冻结实体”；{@link #TIME_PAUSE_FREEZE_PLAYERS} 默认关闭
@@ -48,6 +54,12 @@ public final class TimePauseZone {
 
     /** 被冻结玩家的回拉位置（仅 TIME_PAUSE_FREEZE_PLAYERS 打开时使用）。 */
     private static final Map<UUID, Vec3> FROZEN_PLAYER_POSITIONS = new HashMap<>();
+
+    /** W19：{@code LevelTicks} → 所属维度（身份表缓存，避免每个计划刻都扫全部维度）。 */
+    private static final Map<LevelTicks<?>, ServerLevel> TICK_OWNERS = new IdentityHashMap<>();
+
+    /** W19：当前服务端（{@link #tick(MinecraftServer)} 里更新，供计划刻 mixin 反查维度）。 */
+    private static MinecraftServer currentServer;
 
     private TimePauseZone() {
     }
@@ -71,7 +83,11 @@ public final class TimePauseZone {
 
     /** 服务器每 tick：检查使用者、位移、每秒魔力。 */
     public static void tick(MinecraftServer server) {
+        currentServer = server;
         if (ZONES.isEmpty()) {
+            if (!TICK_OWNERS.isEmpty()) {
+                TICK_OWNERS.clear();
+            }
             return;
         }
         for (Map.Entry<ResourceKey<Level>, List<Zone>> entry : ZONES.entrySet()) {
@@ -217,6 +233,54 @@ public final class TimePauseZone {
     public static void clearAll() {
         ZONES.clear();
         FROZEN_PLAYER_POSITIONS.clear();
+        TICK_OWNERS.clear();
+        currentServer = null;
+    }
+
+    // ------------------------------------------------------------------
+    // W19：方块 / 流体计划刻（LevelTicks）
+    // ------------------------------------------------------------------
+
+    /**
+     * 计划刻所属维度；缓存未命中时在当前服务端的各维度里比
+     * {@code getBlockTicks()} / {@code getFluidTicks()}。
+     */
+    public static ServerLevel levelOf(LevelTicks<?> ticks) {
+        if (ticks == null) {
+            return null;
+        }
+        ServerLevel cached = TICK_OWNERS.get(ticks);
+        if (cached != null) {
+            return cached;
+        }
+        MinecraftServer server = currentServer;
+        if (server == null) {
+            return null;
+        }
+        for (ServerLevel level : server.getAllLevels()) {
+            if (level.getBlockTicks() == ticks || level.getFluidTicks() == ticks) {
+                TICK_OWNERS.put(ticks, level);
+                return level;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * W19：这条计划刻是否需要延后；需要时返回它所在的维度，否则 {@code null}。
+     *
+     * <p>无区域时在首行就返回（热路径）；只有冻结区块内的计划刻才会重排。</p>
+     */
+    public static ServerLevel levelIfTickFrozen(LevelTicks<?> ticks, BlockPos pos) {
+        if (!TIME_PAUSE_ENABLED || !TIME_PAUSE_FREEZE_BLOCKS
+                || ZONES.isEmpty() || ticks == null || pos == null) {
+            return null;
+        }
+        ServerLevel level = levelOf(ticks);
+        if (level == null) {
+            return null;
+        }
+        return isFrozen(level, pos) ? level : null;
     }
 
     private static boolean isExcluded(Zone zone, Entity entity) {

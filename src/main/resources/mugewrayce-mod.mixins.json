@@ -9,6 +9,7 @@
     "TimePauseLivingEntityMixin",
     "TimePauseLevelMixin",
     "TimePauseServerLevelMixin",
+    "TimePauseScheduledTickMixin",
     "ProjectileHitOwnShieldMixin",
     "ProjectileMagicHitMixin",
     "MagicWeaponDamageMixin",
