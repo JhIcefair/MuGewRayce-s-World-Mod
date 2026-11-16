@@ -198,7 +198,10 @@ public class EquipoiseFormationEntity extends Entity {
 
     /** 防御阵 / icefair 自动防御阵反弹投射物（原版盾牌式反弹：反转方向 + 随机转角）；
      *  icefair 自动防御阵每次抵挡（反弹）视为一次受击，重置其 3 秒倒计时（环形则整体重置）。
-     *  W18：主人的投射物直接穿透（不反弹、不重置寿命）。 */
+     *  W18：主人的投射物直接穿透（不反弹、不重置寿命）。
+     *  W20：本模组的直线魔法投射物（点式球 / 归零球 / 充能球）对 icefair 自动防御阵不再弹反——
+     *  返回 NONE 让弹体命中阵后消失（被吸收、无伤害、无反弹）；箭 / 雪球等原版投射物仍弹反。
+     *  手动防御阵（TYPE_DEFENSE / TYPE_MAGIC_DEFENSE）行为不变。 */
     @Override
     public ProjectileDeflection deflection(Projectile projectile) {
         if (this.isOwner(projectile.getOwner())) {
@@ -212,7 +215,9 @@ public class EquipoiseFormationEntity extends Entity {
             if (!this.level().isClientSide()) {
                 IcefairShields.onShieldBlocked(this.ownerUuid, this);
             }
-            return ProjectileDeflection.AIM_DEFLECT;
+            return projectile instanceof AbstractStraightProjectile
+                    ? ProjectileDeflection.NONE
+                    : ProjectileDeflection.AIM_DEFLECT;
         }
         return ProjectileDeflection.NONE;
     }
