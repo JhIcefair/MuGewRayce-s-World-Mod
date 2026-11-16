@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "mugewrayce-mod:magic_aggregation_table",
+    "minecraft:diamond_pickaxe"
+  ],
+  "result": {
+    "id": "mugewrayce-mod:crystal_table"
+  }
+}
