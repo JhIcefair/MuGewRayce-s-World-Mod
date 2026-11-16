@@ -8,12 +8,10 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.input.KeyEvent;
 import net.minecraft.network.chat.Component;
-import org.lwjgl.glfw.GLFW;
 
 /**
- * 净化法杖设置 GUI（W12；W19 改三列；无背景）。
+ * 净化法杖设置 GUI（W12；W19 改三列；W21 去掉确认键；无背景）。
  *
  * <p>i 键在主手净化法杖时打开。W19 起分三列纵向排列（技能从 7 个增加到 15 个，一行放不下）：</p>
  * <pre>
@@ -22,11 +20,11 @@ import org.lwjgl.glfw.GLFW;
  *  单发线式         点式               点火
  *  单体治愈魔法阵   持续线式           融化
  *  群体治愈魔法阵   群体伤害魔法阵     冻结 / 制冰 / 召雷 / 生水 / 前方闪光 / 指向闪光
- *                  [确认]
  * </pre>
  *
- * <p>点击只改高亮，按「确认」或 Enter / 小键盘 Enter 才发送 {@link StaffModePayload} 并关闭。
- * 高亮用 2px 蓝框，按模式 id 查按钮。</p>
+ * <p><b>W21：点任意模式按钮即生效</b>——立刻发送 {@link StaffModePayload} 并关闭界面；
+ * 没有「确认」键，Enter 也不再等于确认（避免“已经关过一次又被 Enter 关一次”）。
+ * 高亮用 2px 蓝框、按模式 id 查按钮，仅作打开期间的视觉残留。</p>
  */
 public class EquipoiseStaffScreen extends Screen {
 
@@ -130,37 +128,20 @@ public class EquipoiseStaffScreen extends Screen {
                     : Component.translatable(skill.langKey());
             this.addModeButton(mode, label, this.columnSkillX, this.topY + i * (BUTTON_HEIGHT + ROW_GAP));
         }
-
-        // 确认键固定在中间列下方（3 个常用选项之后空 8px）
-        int confirmY = this.topY + COMMON_MODES.length * (BUTTON_HEIGHT + ROW_GAP) + 8;
-        this.addRenderableWidget(Button.builder(
-                        Component.translatable("gui.mugewrayce-mod.common.confirm"),
-                        b -> this.confirm())
-                .bounds(this.columnCommonX, confirmY, BUTTON_WIDTH, 20)
-                .build());
     }
 
     private void addModeButton(int mode, Component label, int x, int y) {
-        Button button = this.addRenderableWidget(Button.builder(label, b -> this.selectedMode = mode)
+        Button button = this.addRenderableWidget(Button.builder(label, b -> this.applyMode(mode))
                 .bounds(x, y, BUTTON_WIDTH, BUTTON_HEIGHT)
                 .build());
         this.modeButtons[mode] = button;
     }
 
-    private void confirm() {
-        clientMode = this.selectedMode;
-        ClientPlayNetworking.send(new StaffModePayload(this.selectedMode));
+    /** W21：选中即生效——立刻发包并关闭界面（不再有「确认」键，Enter 也不等于确认）。 */
+    private void applyMode(int mode) {
+        clientMode = mode;
+        ClientPlayNetworking.send(new StaffModePayload(mode));
         this.onClose();
-    }
-
-    @Override
-    public boolean keyPressed(KeyEvent event) {
-        int key = event.key();
-        if (key == GLFW.GLFW_KEY_ENTER || key == GLFW.GLFW_KEY_KP_ENTER) {
-            this.confirm();
-            return true;
-        }
-        return super.keyPressed(event);
     }
 
     @Override

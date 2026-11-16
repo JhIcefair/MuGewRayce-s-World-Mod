@@ -7,7 +7,7 @@
       "entries": [
         {
           "type": "minecraft:item",
-          "name": "mugewrayce-mod:crystal",
+          "name": "mugewrayce-mod:magic_crystal",
           "functions": [
             {
               "function": "minecraft:set_count",
