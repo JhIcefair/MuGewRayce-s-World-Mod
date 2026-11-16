@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "bottom": "mugewrayce-mod:block/crystal_table_bottom",
+    "top": "mugewrayce-mod:block/crystal_table_top",
+    "side": "mugewrayce-mod:block/crystal_table_side"
+  }
+}

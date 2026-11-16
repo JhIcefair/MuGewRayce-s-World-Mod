@@ -21,6 +21,8 @@ public final class ModBlockEntities {
     public static BlockEntityType<MagicAttachmentTableBlockEntity> MAGIC_ATTACHMENT_TABLE;
     public static BlockEntityType<MagicAggregationTableBlockEntity> MAGIC_AGGREGATION_TABLE;
     public static BlockEntityType<AdvancedMagicStudyLecternBlockEntity> ADVANCED_MAGIC_STUDY_LECTERN;
+    /** W20：水晶拆合台。 */
+    public static BlockEntityType<CrystalTableBlockEntity> CRYSTAL_TABLE;
 
     private ModBlockEntities() {
     }
@@ -50,6 +52,13 @@ public final class ModBlockEntities {
                 FabricBlockEntityTypeBuilder.create(
                         AdvancedMagicStudyLecternBlockEntity::new,
                         BlockRegistry.ADVANCED_MAGIC_STUDY_LECTERN).build());
+
+        // W20：水晶拆合台（9 格容器 + 模式字段）
+        CRYSTAL_TABLE = Registry.register(
+                BuiltInRegistries.BLOCK_ENTITY_TYPE,
+                key("crystal_table"),
+                FabricBlockEntityTypeBuilder.create(
+                        CrystalTableBlockEntity::new, BlockRegistry.CRYSTAL_TABLE).build());
     }
 
     private static ResourceKey<BlockEntityType<?>> key(String id) {

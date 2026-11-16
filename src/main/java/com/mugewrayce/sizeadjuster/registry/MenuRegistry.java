@@ -2,6 +2,7 @@ package com.mugewrayce.sizeadjuster.registry;
 
 import com.mugewrayce.sizeadjuster.SizeAdjusterMod;
 import com.mugewrayce.sizeadjuster.container.BaishanBagMenu;
+import com.mugewrayce.sizeadjuster.container.CrystalTableMenu;
 import com.mugewrayce.sizeadjuster.container.MagicAggregationTableMenu;
 import com.mugewrayce.sizeadjuster.container.MagicAttachmentTableMenu;
 import com.mugewrayce.sizeadjuster.container.MagicStudyLecternMenu;
@@ -28,7 +29,7 @@ public final class MenuRegistry {
     private MenuRegistry() {
     }
 
-    /** 触发菜单注册（百杉包 + 聚合台 + 附加台 + 讲台）。 */
+    /** 触发菜单注册（百杉包 + 聚合台 + 附加台 + 讲台 + 水晶拆合台）。 */
     public static void register() {
         // 菜单类的 MenuType 在各自静态字段中注册；这里显式引用，
         // 确保 ModRegistry 的注册顺序真的把它们带起来。
@@ -38,6 +39,8 @@ public final class MenuRegistry {
         Objects.requireNonNull(MagicStudyLecternMenu.TYPE, "magic_study_lectern MenuType");
         Objects.requireNonNull(MagicStudyLecternMenu.ADVANCED_TYPE,
                 "advanced_magic_study_lectern MenuType");
+        // W20：水晶拆合台
+        Objects.requireNonNull(CrystalTableMenu.TYPE, "crystal_table MenuType");
     }
 
     /**

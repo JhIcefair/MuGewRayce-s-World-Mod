@@ -18,6 +18,7 @@ import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.RandomStrollGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
+import net.minecraft.world.entity.ai.targeting.TargetingConditions;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -120,14 +121,23 @@ public class LifelessMagicBodyEntity extends AbstractMagicBodyEntity {
         this.goalSelector.addGoal(8, new LookAtPlayerGoal(this, Player.class, 8.0F));
         this.goalSelector.addGoal(8, new RandomLookAroundGoal(this));
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
-        this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, true));
+        // W20：无差别索敌——不再只认玩家；排除魔法体同类与创造 / 旁观玩家。
+        // （26.1 的 Monster 没有默认索敌，缺了这条就"只打玩家、不打附近生物"。）
+        this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, LivingEntity.class, true,
+                (TargetingConditions.Selector) (target, serverLevel) ->
+                        !(target instanceof AbstractMagicBodyEntity)
+                                && !(target instanceof Player player
+                                        && (player.isCreative() || player.isSpectator()))));
     }
 
     /**
-     * W19：没有生命的魔法体也会用魔法——目标在 16 格内时每 3 秒放一发点式魔法弹。
+     * W19/W20：没有生命的魔法体也会用魔法——目标在 16 格内时每 3 秒放一发点式魔法弹。
      *
      * <p>目标来自 {@link NearestAttackableTargetGoal}（不另写搜索）；只占 LOOK 旗标，
      * 与近战 / 游走互不阻塞。冷却只存在 goal 实例里，不写存档。</p>
+     *
+     * <p>W20 起目标可以是任意生物（不再限定玩家）；已知取舍：本 goal 占 LOOK，
+     * 16 格内 {@link MeleeAttackGoal} 起不来，所以贴脸时只放法术不挥击。</p>
      */
     private static final class LifelessCastGoal extends Goal {
 
@@ -141,11 +151,7 @@ public class LifelessMagicBodyEntity extends AbstractMagicBodyEntity {
 
         @Override
         public boolean canUse() {
-            Player target = this.playerTarget();
-            if (target == null) {
-                return false;
-            }
-            return this.body.distanceToSqr(target) <= CAST_RANGE * CAST_RANGE;
+            return this.castTarget() != null;
         }
 
         @Override
@@ -160,7 +166,7 @@ public class LifelessMagicBodyEntity extends AbstractMagicBodyEntity {
 
         @Override
         public void tick() {
-            Player target = this.playerTarget();
+            LivingEntity target = this.castTarget();
             if (target == null) {
                 return;
             }
@@ -175,14 +181,17 @@ public class LifelessMagicBodyEntity extends AbstractMagicBodyEntity {
             }
         }
 
-        /** 当前目标必须是存活、非创造 / 非旁观的玩家。 */
-        private Player playerTarget() {
+        /** W20：当前目标须存活、非旁观 / 非创造玩家，且与自身距离 ≤ 16 格。 */
+        private LivingEntity castTarget() {
             LivingEntity target = this.body.getTarget();
-            if (!(target instanceof Player player) || !player.isAlive()
-                    || player.isSpectator() || player.isCreative()) {
+            if (target == null || !target.isAlive() || target.isSpectator()
+                    || target instanceof AbstractMagicBodyEntity) {
                 return null;
             }
-            return player;
+            if (target instanceof Player player && player.isCreative()) {
+                return null;
+            }
+            return this.body.distanceToSqr(target) <= CAST_RANGE * CAST_RANGE ? target : null;
         }
     }
 }

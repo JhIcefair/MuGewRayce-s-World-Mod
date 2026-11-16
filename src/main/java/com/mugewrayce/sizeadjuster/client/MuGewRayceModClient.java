@@ -19,8 +19,10 @@ import com.mugewrayce.sizeadjuster.client.gui.MagicCrystalScreen;
 import com.mugewrayce.sizeadjuster.client.gui.MagicStaffScreen;
 import com.mugewrayce.sizeadjuster.client.gui.MagicStudyLecternScreen;
 import com.mugewrayce.sizeadjuster.client.gui.ManaDetectorScreen;
+import com.mugewrayce.sizeadjuster.client.gui.CrystalTableScreen;
 import com.mugewrayce.sizeadjuster.client.gui.StudyCertScreen;
 import com.mugewrayce.sizeadjuster.container.BaishanBagMenu;
+import com.mugewrayce.sizeadjuster.container.CrystalTableMenu;
 import com.mugewrayce.sizeadjuster.container.MagicAggregationTableMenu;
 import com.mugewrayce.sizeadjuster.container.MagicAttachmentTableMenu;
 import com.mugewrayce.sizeadjuster.container.MagicStudyLecternMenu;
@@ -257,6 +259,11 @@ public class MuGewRayceModClient implements ClientModInitializer {
                 (MenuScreens.ScreenConstructor<MagicStudyLecternMenu, MagicStudyLecternScreen>)
                         (menu, inventory, title) -> new MagicStudyLecternScreen(menu, inventory, title));
 
+        // W20：水晶拆合台 GUI
+        MenuScreens.register(CrystalTableMenu.TYPE,
+                (MenuScreens.ScreenConstructor<CrystalTableMenu, CrystalTableScreen>)
+                        (menu, inventory, title) -> new CrystalTableScreen(menu, inventory, title));
+
         // W16：高级魔法学习讲台 GUI（同一屏幕，高级皮肤）
         MenuScreens.register(MagicStudyLecternMenu.ADVANCED_TYPE,
                 (MenuScreens.ScreenConstructor<MagicStudyLecternMenu, MagicStudyLecternScreen>)
@@ -295,6 +302,10 @@ public class MuGewRayceModClient implements ClientModInitializer {
             registerGuiTexture(client, MagicStudyLecternScreen.ADVANCED_SMALL_NORMAL);
             registerGuiTexture(client, MagicStudyLecternScreen.ADVANCED_SMALL_PRESSED);
             registerGuiTexture(client, MagicStudyLecternScreen.ADVANCED_SMALL_DISABLED);
+            // W20：水晶拆合台（背景 + 两个按键态）
+            registerGuiTexture(client, CrystalTableScreen.BACKGROUND);
+            registerGuiTexture(client, CrystalTableScreen.BUTTON_NORMAL);
+            registerGuiTexture(client, CrystalTableScreen.BUTTON_PRESSED);
         });
     }
 

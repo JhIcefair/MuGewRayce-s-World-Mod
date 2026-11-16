@@ -52,6 +52,8 @@ public class SizeAdjusterMod implements ModInitializer {
 
         ModRegistry.register();
         MagicParticles.register();
+        // W20：水晶块的世界生成注入（configured/placed feature 走数据包，注入走 Fabric API）
+        com.mugewrayce.sizeadjuster.worldgen.CrystalWorldgen.register();
         EquipoiseSwitchPayload.register();
         EquipoiseStaffItem.registerEvents();
         SizeActionPayload.register();

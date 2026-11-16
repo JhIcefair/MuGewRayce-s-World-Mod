@@ -48,6 +48,8 @@ public final class ModCreativeTabs {
                     output.accept(MagicItems.magicStaff);
                     output.accept(MagicItems.magicCrystal);
                     output.accept(MagicItems.eternalCrystal);
+                    // W20：水晶（水晶块 / 拆合台的原料）
+                    output.accept(MagicItems.crystal);
                     output.accept(MagicItems.magicStudyCertificate);
                     output.accept(MagicItems.magicBook);
                     output.accept(MagicItems.beginnerExamApplication);
@@ -60,11 +62,15 @@ public final class ModCreativeTabs {
                     output.accept(AttachmentBookItem.createStack(MagicItems.attachmentBook, 3));
                     output.accept(MagicItems.lifeMigrationStone);
 
-                    // W08 的三个方块物品
+                    // W08 的方块物品（W20：高级讲台提前到魔法讲台之前；只调展示顺序，
+                    // BlockRegistry 的注册顺序不动——数字 id 依赖注册顺序）
+                    output.accept(BlockRegistry.ADVANCED_MAGIC_STUDY_LECTERN_ITEM);
                     output.accept(BlockRegistry.MAGIC_STUDY_LECTERN_ITEM);
                     output.accept(BlockRegistry.MAGIC_ATTACHMENT_TABLE_ITEM);
                     output.accept(BlockRegistry.MAGIC_AGGREGATION_TABLE_ITEM);
-                    output.accept(BlockRegistry.ADVANCED_MAGIC_STUDY_LECTERN_ITEM);
+                    // W20：水晶块 + 水晶拆合台（排在四个方块物品之后）
+                    output.accept(BlockRegistry.CRYSTAL_BLOCK_ITEM);
+                    output.accept(BlockRegistry.CRYSTAL_TABLE_ITEM);
                 })
                 .build();
 
