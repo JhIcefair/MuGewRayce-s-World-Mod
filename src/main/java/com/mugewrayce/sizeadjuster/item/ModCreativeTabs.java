@@ -48,6 +48,8 @@ public final class ModCreativeTabs {
                     output.accept(MagicItems.magicStaff);
                     output.accept(MagicItems.magicCrystal);
                     output.accept(MagicItems.eternalCrystal);
+                    // W20：水晶（水晶块 / 拆合台的原料）
+                    output.accept(MagicItems.crystal);
                     output.accept(MagicItems.magicStudyCertificate);
                     output.accept(MagicItems.magicBook);
                     output.accept(MagicItems.beginnerExamApplication);
@@ -66,6 +68,9 @@ public final class ModCreativeTabs {
                     output.accept(BlockRegistry.MAGIC_STUDY_LECTERN_ITEM);
                     output.accept(BlockRegistry.MAGIC_ATTACHMENT_TABLE_ITEM);
                     output.accept(BlockRegistry.MAGIC_AGGREGATION_TABLE_ITEM);
+                    // W20：水晶块 + 水晶拆合台（排在四个方块物品之后）
+                    output.accept(BlockRegistry.CRYSTAL_BLOCK_ITEM);
+                    output.accept(BlockRegistry.CRYSTAL_TABLE_ITEM);
                 })
                 .build();
 
