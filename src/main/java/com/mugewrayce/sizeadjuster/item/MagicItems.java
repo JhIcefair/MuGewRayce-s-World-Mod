@@ -4,11 +4,14 @@ import com.mugewrayce.sizeadjuster.registry.ItemRegistry;
 import net.minecraft.world.item.Item;
 
 /**
- * W08 魔法体系 12 件非方块物品（接口约定 §1.2）+ W20 的水晶。
+ * W08 魔法体系 12 件非方块物品（接口约定 §1.2）。
  *
  * <p>本任务只做注册、默认组件与创造分类；GUI / 魔力 / 施法 / 考试全部留后续任务。
  * 证书类（学习证 / 申请书 / 证明 / 认证）<b>不写默认组件</b>，创造模式直接拿到即为无效物品，
  * 与 W06 的 {@code InvalidItemRules} 规则一致。</p>
+ *
+ * <p>W21：W20 新增的 `crystal` 物品已删除，水晶块掉落 / 拆合台拆出与合成都改用
+ * {@link #magicCrystal}（普通魔法水晶）。</p>
  */
 public final class MagicItems {
 
@@ -48,9 +51,6 @@ public final class MagicItems {
     /** 生命迁移石；角色转换 GUI W12。 */
     public static Item lifeMigrationStone;
 
-    /** W20：水晶（水晶块的原料；8 个水晶 ⇄ 1 个水晶块，走水晶拆合台）。 */
-    public static Item crystal;
-
     private MagicItems() {
     }
 
@@ -73,7 +73,5 @@ public final class MagicItems {
                 PromotionCertificateItem::new);
         attachmentBook = ItemRegistry.register("magic_attachment_book", AttachmentBookItem::new);
         lifeMigrationStone = ItemRegistry.register("life_migration_stone", LifeMigrationStoneItem::new);
-        // W20：水晶（普通物品；水晶块由 BlockRegistry 注册）
-        crystal = ItemRegistry.register("crystal", Item::new);
     }
 }

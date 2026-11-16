@@ -23,10 +23,10 @@ import net.minecraft.world.level.block.Block;
  * id 0 = 拆分、id 1 = 合成；选中状态由服务端 {@link CrystalTableBlockEntity#getMode()} 决定，
  * 通过 {@link ContainerData} 索引 0 回读，客户端只负责显示。</p>
  *
- * <p>交易规则（草案由 W20 交接单 §2.5.4 定稿）：</p>
+ * <p>交易规则（草案由 W20 交接单 §2.5.4 定稿；W21 起材料统一为<b>普通魔法水晶</b>）：</p>
  * <ul>
- *   <li>拆分：中心扣 1 个水晶块 → 一次给出 <b>8 个水晶</b>；</li>
- *   <li>合成：环上 8 格各扣 1 个<b>同种</b>水晶 → 一次给出 <b>1 个水晶块</b>；</li>
+ *   <li>拆分：中心扣 1 个水晶块 → 一次给出 <b>8 个普通魔法水晶</b>；</li>
+ *   <li>合成：环上 8 格各扣 1 个<b>同种</b>普通魔法水晶 → 一次给出 <b>1 个水晶块</b>；</li>
  *   <li>预览格只在取出时结算，拿不下（光标放不下）时不扣料并给提示。</li>
  * </ul>
  *
@@ -171,8 +171,9 @@ public class CrystalTableMenu extends AbstractModMenu {
         return stack != null && !stack.isEmpty() && stack.is(BlockRegistry.CRYSTAL_BLOCK_ITEM);
     }
 
+    /** W21：可拆 / 可合的材料是「普通魔法水晶」（`magic_crystal`），不是独立新物品。 */
     public boolean isCrystal(ItemStack stack) {
-        return stack != null && !stack.isEmpty() && stack.is(MagicItems.crystal);
+        return stack != null && !stack.isEmpty() && stack.is(MagicItems.magicCrystal);
     }
 
     /** 预览格显示什么（条件不满足返回空）。 */
@@ -183,10 +184,10 @@ public class CrystalTableMenu extends AbstractModMenu {
         return this.isSplit() ? this.splitPreview() : ItemStack.EMPTY;
     }
 
-    /** 拆分预览：中心有水晶块时，环上每格显示 1 个水晶。 */
+    /** 拆分预览：中心有水晶块时，环上每格显示 1 个普通魔法水晶。 */
     private ItemStack splitPreview() {
         return this.isCrystalBlock(this.container.getItem(SLOT_CENTER))
-                ? new ItemStack(MagicItems.crystal) : ItemStack.EMPTY;
+                ? new ItemStack(MagicItems.magicCrystal) : ItemStack.EMPTY;
     }
 
     /** 合成预览：环上 8 格都有同种水晶时，中心显示 1 个水晶块。 */
@@ -194,7 +195,7 @@ public class CrystalTableMenu extends AbstractModMenu {
         return this.craftInputsValid() ? new ItemStack(BlockRegistry.CRYSTAL_BLOCK_ITEM) : ItemStack.EMPTY;
     }
 
-    /** 结算产物（不执行交易）：拆分 8 个水晶，合成 1 个水晶块。 */
+    /** 结算产物（不执行交易）：拆分 8 个普通魔法水晶，合成 1 个水晶块。 */
     public ItemStack productFor(CrystalTableSlot.Role role) {
         if (role == CrystalTableSlot.Role.CENTER) {
             return this.isSplit() ? ItemStack.EMPTY : this.craftPreview();
@@ -227,7 +228,8 @@ public class CrystalTableMenu extends AbstractModMenu {
         this.container.removeItem(SLOT_CENTER, 1);
         this.container.setChanged();
         this.clearHint();
-        return new ItemStack(MagicItems.crystal, SPLIT_CRYSTALS);
+        // W21：产物是新生成的默认栈（默认 CrystalData），不复制输入水晶的组件
+        return new ItemStack(MagicItems.magicCrystal, SPLIT_CRYSTALS);
     }
 
     private ItemStack takeCraft() {
@@ -243,7 +245,12 @@ public class CrystalTableMenu extends AbstractModMenu {
         return new ItemStack(BlockRegistry.CRYSTAL_BLOCK_ITEM, 1);
     }
 
-    /** 环上 8 格都非空、且是同种水晶。 */
+    /**
+     * 环上 8 格都非空、且是同种水晶。
+     *
+     * <p>W21：「同种」<b>只比物品类型</b>，不比组件——普通魔法水晶带供能组件，
+     * 不同供能设置的它们仍是同一种材料。</p>
+     */
     private boolean craftInputsValid() {
         ItemStack first = this.container.getItem(1);
         if (!this.isCrystal(first)) {
@@ -251,7 +258,7 @@ public class CrystalTableMenu extends AbstractModMenu {
         }
         for (int i = 2; i < SIZE; i++) {
             ItemStack stack = this.container.getItem(i);
-            if (!this.isCrystal(stack) || !ItemStack.isSameItemSameComponents(first, stack)) {
+            if (!this.isCrystal(stack) || first.getItem() != stack.getItem()) {
                 return false;
             }
         }
@@ -268,7 +275,7 @@ public class CrystalTableMenu extends AbstractModMenu {
             if (!this.isCrystal(stack)) {
                 return HINT_NEED_CRYSTALS;
             }
-            if (!ItemStack.isSameItemSameComponents(first, stack)) {
+            if (first.getItem() != stack.getItem()) {
                 return HINT_NOT_SAME;
             }
         }

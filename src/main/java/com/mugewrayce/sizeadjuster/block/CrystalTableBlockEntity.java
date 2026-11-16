@@ -69,7 +69,7 @@ public class CrystalTableBlockEntity extends AbstractMagicContainerBlockEntity {
         if (slot == SLOT_CENTER) {
             return stack.is(BlockRegistry.CRYSTAL_BLOCK_ITEM);
         }
-        return stack.is(MagicItems.crystal);
+        return stack.is(MagicItems.magicCrystal);
     }
 
     @Override

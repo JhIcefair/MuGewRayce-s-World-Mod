@@ -48,8 +48,6 @@ public final class ModCreativeTabs {
                     output.accept(MagicItems.magicStaff);
                     output.accept(MagicItems.magicCrystal);
                     output.accept(MagicItems.eternalCrystal);
-                    // W20：水晶（水晶块 / 拆合台的原料）
-                    output.accept(MagicItems.crystal);
                     output.accept(MagicItems.magicStudyCertificate);
                     output.accept(MagicItems.magicBook);
                     output.accept(MagicItems.beginnerExamApplication);
