@@ -1,7 +1,9 @@
 package com.mugewrayce.sizeadjuster.magic.cast;
 
 import com.mugewrayce.sizeadjuster.magic.mana.ManaService;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.SectionPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
@@ -26,19 +28,24 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * 时间暂停的区域注册表（W14b，草案 §6.4 / 交接单 §2.4）。
+ * 时间暂停的区域注册表（W14b，草案 §6.4 / 交接单 §2.4；W19/W20 补层）。
  *
- * <p>四层暂停：区域内的非玩家实体跳过 tick/AI、方块实体跳过 tick、随机刻跳过、
- * <b>方块 / 流体计划刻延后</b>（W19）；使用者本人永远不冻结，移动超过 0.5 格立即结束；
+ * <p>W20 起按 {@code /tick freeze} 的“覆盖面清单”补齐，但<b>仍只冻结受影响区块、不冻昼夜</b>：
+ * 区域内的实体 tick（含 TNT / 落沙 / 矿车，经 {@code TickRateManager#isEntityFrozen}）、
+ * 方块实体、随机刻与降水、方块 / 流体计划刻（延后而非丢弃）、方块事件（活塞 / 音符盒）、
+ * 雷暴与自然生成都停；使用者本人永远不冻结，移动超过 0.5 格立即结束；
  * 每 20 tick 扣 1 点魔力，扣不起立即结束并提示。</p>
  *
  * <p><b>昼夜（世界时钟）不冻结</b>：26.1 的 {@code WorldClock} 是维度级全局值
  * （{@code ServerClockManager} 全服一份），不能按区块冻结；因此本魔法只让“区域 tick 静止”，
- * {@code /time query gametime} 继续增长。若以后要连昼夜一起停，需要另开一个明确开关（本轮不做）。</p>
+ * {@code /time query gametime} 继续增长。若以后要连昼夜一起停，需要另开一个明确开关。</p>
  *
  * <p>{@link #TIME_PAUSE_ENABLED} 是总开关；{@link #TIME_PAUSE_FREEZE_BLOCKS}
  * 关闭时退化为“只冻结实体”；{@link #TIME_PAUSE_FREEZE_PLAYERS} 默认关闭
  * （服务端强拉其他玩家会橡皮筋，草案与实现口径差异见 W14 交接单 §2.10 E）。</p>
+ *
+ * <p>W20 性能：每个维度维护一份已打包的冻结区块 {@link LongOpenHashSet}，
+ * 热路径（每实体 / 每计划刻 / 每方块实体）只做一次 hash 查询，不再 new ChunkPos 或遍历 zone。</p>
  */
 public final class TimePauseZone {
 
@@ -51,6 +58,9 @@ public final class TimePauseZone {
 
     /** 维度 → 活动区域。 */
     private static final Map<ResourceKey<Level>, List<Zone>> ZONES = new HashMap<>();
+
+    /** 维度 → 已打包的冻结区块（{@code ChunkPos.pack}），由 {@link #rebuildFrozenChunks()} 重建。 */
+    private static final Map<ResourceKey<Level>, LongOpenHashSet> FROZEN_CHUNKS = new HashMap<>();
 
     /** 被冻结玩家的回拉位置（仅 TIME_PAUSE_FREEZE_PLAYERS 打开时使用）。 */
     private static final Map<UUID, Vec3> FROZEN_PLAYER_POSITIONS = new HashMap<>();
@@ -78,6 +88,7 @@ public final class TimePauseZone {
                 owner.position());
         applyExcluded(zone, excluded);
         ZONES.computeIfAbsent(level.dimension(), key -> new ArrayList<>()).add(zone);
+        rebuildFrozenChunks();
         return true;
     }
 
@@ -88,9 +99,15 @@ public final class TimePauseZone {
             if (!TICK_OWNERS.isEmpty()) {
                 TICK_OWNERS.clear();
             }
+            if (!FROZEN_CHUNKS.isEmpty()) {
+                FROZEN_CHUNKS.clear();
+            }
             return;
         }
-        for (Map.Entry<ResourceKey<Level>, List<Zone>> entry : ZONES.entrySet()) {
+        boolean removed = false;
+        Iterator<Map.Entry<ResourceKey<Level>, List<Zone>>> entries = ZONES.entrySet().iterator();
+        while (entries.hasNext()) {
+            Map.Entry<ResourceKey<Level>, List<Zone>> entry = entries.next();
             ServerLevel level = server.getLevel(entry.getKey());
             if (level == null) {
                 continue;
@@ -103,6 +120,7 @@ public final class TimePauseZone {
                         || owner.level() != level
                         || owner.position().distanceToSqr(zone.anchor) > OWNER_MOVE_TOLERANCE * OWNER_MOVE_TOLERANCE) {
                     iterator.remove();
+                    removed = true;
                     continue;
                 }
                 zone.ticks++;
@@ -113,6 +131,7 @@ public final class TimePauseZone {
                         owner.sendSystemMessage(Component.translatable(
                                 "message.mugewrayce-mod.mana_insufficient"), true);
                         iterator.remove();
+                        removed = true;
                         continue;
                     }
                 }
@@ -121,8 +140,11 @@ public final class TimePauseZone {
                 }
             }
             if (entry.getValue().isEmpty()) {
-                ZONES.remove(entry.getKey());
+                entries.remove();
             }
+        }
+        if (removed) {
+            rebuildFrozenChunks();
         }
     }
 
@@ -132,7 +154,7 @@ public final class TimePauseZone {
                 FROZEN_PLAYER_POSITIONS.remove(player.getUUID());
                 continue;
             }
-            if (!zone.contains(player.chunkPosition())) {
+            if (!zone.contains(entityChunkKey(player))) {
                 FROZEN_PLAYER_POSITIONS.remove(player.getUUID());
                 continue;
             }
@@ -145,7 +167,11 @@ public final class TimePauseZone {
         }
     }
 
-    /** 实体是否被冻结（实体 tick mixin 用）。 */
+    // ------------------------------------------------------------------
+    // 冻结判定（热路径：全程只做 hash 查询，不分配对象）
+    // ------------------------------------------------------------------
+
+    /** 实体是否被冻结（实体 tick / {@code TickRateManager} mixin 用）。 */
     public static boolean isFrozen(Level level, Entity entity) {
         if (!TIME_PAUSE_ENABLED || entity == null) {
             return false;
@@ -154,11 +180,16 @@ public final class TimePauseZone {
         if (zones == null || zones.isEmpty()) {
             return false;
         }
+        LongOpenHashSet frozen = FROZEN_CHUNKS.get(level.dimension());
+        long chunkKey = entityChunkKey(entity);
+        if (frozen == null || !frozen.contains(chunkKey)) {
+            return false;
+        }
         for (Zone zone : zones) {
-            if (entity.getUUID().equals(zone.owner) || isExcluded(zone, entity)) {
+            if (!zone.contains(chunkKey)) {
                 continue;
             }
-            if (!zone.contains(entity.chunkPosition())) {
+            if (entity.getUUID().equals(zone.owner) || isExcluded(zone, entity)) {
                 continue;
             }
             if (entity instanceof Player && !TIME_PAUSE_FREEZE_PLAYERS) {
@@ -169,45 +200,32 @@ public final class TimePauseZone {
         return false;
     }
 
-    /** 方块/区块是否在冻结区域（方块实体与随机刻 mixin 用）。 */
+    /** 方块/区块是否在冻结区域（方块实体、随机刻、计划刻、方块事件、雷暴、自然生成 mixin 用）。 */
     public static boolean isFrozen(Level level, BlockPos pos) {
-        if (!TIME_PAUSE_ENABLED || !TIME_PAUSE_FREEZE_BLOCKS) {
+        if (!TIME_PAUSE_ENABLED || !TIME_PAUSE_FREEZE_BLOCKS || pos == null) {
             return false;
         }
-        List<Zone> zones = ZONES.get(level.dimension());
-        if (zones == null || zones.isEmpty()) {
-            return false;
-        }
-        ChunkPos chunk = ChunkPos.containing(pos);
-        for (Zone zone : zones) {
-            if (zone.contains(chunk)) {
-                return true;
-            }
-        }
-        return false;
+        LongOpenHashSet frozen = FROZEN_CHUNKS.get(level.dimension());
+        return frozen != null && frozen.contains(ChunkPos.pack(pos));
     }
 
     public static boolean isFrozen(Level level, ChunkPos chunk) {
-        if (!TIME_PAUSE_ENABLED || !TIME_PAUSE_FREEZE_BLOCKS) {
+        if (!TIME_PAUSE_ENABLED || !TIME_PAUSE_FREEZE_BLOCKS || chunk == null) {
             return false;
         }
-        List<Zone> zones = ZONES.get(level.dimension());
-        if (zones == null || zones.isEmpty()) {
-            return false;
-        }
-        for (Zone zone : zones) {
-            if (zone.contains(chunk)) {
-                return true;
-            }
-        }
-        return false;
+        LongOpenHashSet frozen = FROZEN_CHUNKS.get(level.dimension());
+        return frozen != null && frozen.contains(chunk.pack());
     }
 
     public static void clearPlayer(UUID playerId) {
+        boolean changed = false;
         for (List<Zone> zones : ZONES.values()) {
-            zones.removeIf(zone -> zone.owner.equals(playerId));
+            changed |= zones.removeIf(zone -> zone.owner.equals(playerId));
         }
         FROZEN_PLAYER_POSITIONS.remove(playerId);
+        if (changed) {
+            rebuildFrozenChunks();
+        }
     }
 
     /** 结束该使用者的全部区域（重新施放 / 松手时调用；W17 改为 public）。 */
@@ -232,9 +250,34 @@ public final class TimePauseZone {
 
     public static void clearAll() {
         ZONES.clear();
+        FROZEN_CHUNKS.clear();
         FROZEN_PLAYER_POSITIONS.clear();
         TICK_OWNERS.clear();
         currentServer = null;
+    }
+
+    /** 由 {@link #ZONES} 重建每维度的冻结区块集合（多 zone 重叠取并集）。 */
+    private static void rebuildFrozenChunks() {
+        FROZEN_CHUNKS.clear();
+        for (Map.Entry<ResourceKey<Level>, List<Zone>> entry : ZONES.entrySet()) {
+            LongOpenHashSet set = new LongOpenHashSet();
+            for (Zone zone : entry.getValue()) {
+                for (int x = zone.minChunkX; x <= zone.maxChunkX; x++) {
+                    for (int z = zone.minChunkZ; z <= zone.maxChunkZ; z++) {
+                        set.add(ChunkPos.pack(x, z));
+                    }
+                }
+            }
+            if (!set.isEmpty()) {
+                FROZEN_CHUNKS.put(entry.getKey(), set);
+            }
+        }
+    }
+
+    /** 实体所在区块的打包 key（不 new ChunkPos）。 */
+    private static long entityChunkKey(Entity entity) {
+        return ChunkPos.pack(SectionPos.blockToSectionCoord(entity.getX()),
+                SectionPos.blockToSectionCoord(entity.getZ()));
     }
 
     // ------------------------------------------------------------------
@@ -273,7 +316,7 @@ public final class TimePauseZone {
      */
     public static ServerLevel levelIfTickFrozen(LevelTicks<?> ticks, BlockPos pos) {
         if (!TIME_PAUSE_ENABLED || !TIME_PAUSE_FREEZE_BLOCKS
-                || ZONES.isEmpty() || ticks == null || pos == null) {
+                || FROZEN_CHUNKS.isEmpty() || ticks == null || pos == null) {
             return null;
         }
         ServerLevel level = levelOf(ticks);
@@ -286,6 +329,9 @@ public final class TimePauseZone {
     private static boolean isExcluded(Zone zone, Entity entity) {
         if (zone.excludedEntities.contains(entity.getUUID())) {
             return true;
+        }
+        if (zone.excludedTypes.isEmpty()) {
+            return false;
         }
         String typeId = BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType()).toString();
         return zone.excludedTypes.contains(typeId);
@@ -335,6 +381,13 @@ public final class TimePauseZone {
         private boolean contains(ChunkPos chunk) {
             return chunk.x() >= minChunkX && chunk.x() <= maxChunkX
                     && chunk.z() >= minChunkZ && chunk.z() <= maxChunkZ;
+        }
+
+        /** 打包区块 key（{@code ChunkPos.pack}）是否落在本区域内。 */
+        private boolean contains(long packedChunk) {
+            int x = ChunkPos.getX(packedChunk);
+            int z = ChunkPos.getZ(packedChunk);
+            return x >= minChunkX && x <= maxChunkX && z >= minChunkZ && z <= maxChunkZ;
         }
     }
 }
